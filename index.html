@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity 3D Chess - Wikimedia Staunton Edition</title>
+  <title>Antigravity 3D Chess - Engraved Woodcut Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,6 +14,16 @@
 
   <style>
     :root {
+      --bg-gradient: radial-gradient(circle at 50% 30%, #f7f3eb 0%, #e5dec9 100%);
+      --hud-bg: rgba(247, 243, 235, 0.88);
+      --hud-border: rgba(40, 35, 30, 0.2);
+      --accent: #2b2725;
+      --accent-hover: #1c1917;
+      --text-main: #1c1917;
+      --text-muted: #66605b;
+    }
+
+    [data-theme="vintage"] {
       --bg-gradient: radial-gradient(circle at 50% 30%, #f4efe6 0%, #dcd0bc 100%);
       --hud-bg: rgba(245, 240, 232, 0.85);
       --hud-border: rgba(60, 45, 30, 0.15);
@@ -52,7 +62,7 @@
 
     body {
       font-family: 'Outfit', sans-serif;
-      background: #dcd0bc;
+      background: #e5dec9;
       background: var(--bg-gradient);
       color: var(--text-main);
       width: 100vw;
@@ -139,18 +149,13 @@
     }
 
     .select-input option {
-      background: #f4efe6;
-      color: #292524;
-    }
-
-    [data-theme="porcelain"] .select-input option {
-      background: #1e1e2f;
-      color: #fff;
+      background: #f7f3eb;
+      color: #1c1917;
     }
 
     .btn:hover, .select-input:hover {
       background: rgba(0, 0, 0, 0.1);
-      border-color: rgba(0, 0, 0, 0.2);
+      border-color: rgba(0, 0, 0, 0.25);
     }
 
     .btn-primary {
@@ -205,15 +210,15 @@
       width: 14px;
       height: 14px;
       border-radius: 50%;
-      background: #e8d5b5;
-      border: 1px solid #78716c;
+      background: #ffffff;
+      border: 1px solid #1c1917;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
       transition: background 0.3s;
     }
 
     .turn-badge.black {
-      background: #5a301c;
-      border: 1px solid #78716c;
+      background: #1c1917;
+      border: 1px solid #1c1917;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
     }
 
@@ -305,7 +310,7 @@
       position: fixed;
       inset: 0;
       z-index: 100;
-      background: rgba(40, 35, 30, 0.6);
+      background: rgba(30, 25, 20, 0.65);
       backdrop-filter: blur(10px);
       display: none;
       align-items: center;
@@ -313,7 +318,7 @@
     }
 
     .modal-card {
-      background: rgba(245, 240, 232, 0.95);
+      background: rgba(247, 243, 235, 0.96);
       border: 1px solid var(--hud-border);
       border-radius: 20px;
       padding: 2rem;
@@ -333,7 +338,7 @@
       font-family: 'Cinzel', serif;
       font-size: 1.6rem;
       margin-bottom: 0.5rem;
-      color: #292524;
+      color: #1c1917;
     }
 
     .modal-card p {
@@ -353,7 +358,7 @@
       border: 1px solid var(--hud-border);
       border-radius: 12px;
       padding: 1rem 0.5rem;
-      color: #292524;
+      color: #1c1917;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
@@ -389,7 +394,7 @@
       font-family: 'Cinzel', serif;
       font-size: 2rem;
       font-weight: 700;
-      color: #8b5a2b;
+      color: #1c1917;
       margin-bottom: 0.5rem;
     }
 
@@ -409,12 +414,13 @@
     <div class="hud-header">
       <div class="brand">
         <img id="brandIcon" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" alt="Knight Icon">
-        <h1>Wikimedia Staunton Chess</h1>
+        <h1>Engraved Woodcut Chess</h1>
       </div>
 
       <div class="controls-top">
         <select id="boardTheme" class="select-input" onchange="changeTheme()">
-          <option value="vintage" selected>Natural Staunton Wood (Image)</option>
+          <option value="woodcut" selected>Vintage Woodcut Engraving (Image)</option>
+          <option value="vintage">Natural Staunton Boxwood</option>
           <option value="porcelain">Cobalt Porcelain (Blue)</option>
           <option value="cyber">Midnight Cyber (Dark)</option>
         </select>
@@ -501,7 +507,7 @@
   </div>
 
   <script>
-    // --- 1. WIKIMEDIA CHESS PIECE SVG URLS (NO TEXT SYMBOLS) ---
+    // --- 1. WIKIMEDIA STUNNING WOODCUT ENGRAVED PIECE SVGS ---
     const PIECES_SVG = {
       'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
       'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
@@ -537,7 +543,6 @@
     let capturedWhite = [];
     let capturedBlack = [];
 
-    // FIDE State Tracking
     let enPassantTarget = null;
     let hasMoved = {
       whiteKing: false, blackKing: false,
@@ -548,7 +553,7 @@
     let pendingPromotion = null;
     let gameMode = 'ai-medium';
     let userSide = 'white';
-    let currentTheme = 'vintage';
+    let currentTheme = 'woodcut';
     let isGameOver = false;
 
     // --- 2. THREE.JS SCENE & GRAPHICS ---
@@ -561,7 +566,6 @@
     let raycaster, mouse;
     const textureCache = {};
 
-    // THEME MATERIALS
     let matLightSquare, matDarkSquare, matFrame, matFrameGold;
     let matWhitePiece, matBlackPiece, matWhiteAccent, matBlackAccent;
     let matFeltBase;
@@ -597,28 +601,37 @@
         matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2, metalness: 0.9 });
         matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.2, metalness: 0.9 });
         if (scene) scene.background = new THREE.Color(0x020617);
-      } else {
-        // 'vintage' - Authentic Staunton Boxwood & Stained Rosewood
+      } else if (themeName === 'vintage') {
         matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf2e6ce, roughness: 0.35 });
         matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.4 });
         matFrame = new THREE.MeshStandardMaterial({ color: 0x4a301c, roughness: 0.35 });
         matFrameGold = new THREE.MeshStandardMaterial({ color: 0xc69214, roughness: 0.3, metalness: 0.7 });
-
         matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xe8d5b5, roughness: 0.32, metalness: 0.04 });
         matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x5a301c, roughness: 0.35, metalness: 0.08 });
         matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.6 });
         matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x3d2012, roughness: 0.3, metalness: 0.2 });
         if (scene) scene.background = new THREE.Color(0xdcd0bc);
+      } else {
+        // 'woodcut' - Vintage Woodcut Engraving (Matching exact attached illustration image)
+        matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf7f3eb, roughness: 0.3 }); // Engraved Parchment
+        matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x3c3836, roughness: 0.35 });  // Dark Etched Slate
+        matFrame = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.25 });      // Dark Ebony Frame
+        matFrameGold = new THREE.MeshStandardMaterial({ color: 0x78716c, roughness: 0.3, metalness: 0.5 });
+        matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.0 });  // Crisp Woodcut White
+        matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.25, metalness: 0.0 }); // Crisp Woodcut Ebony
+        matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.3, metalness: 0.1 });
+        matBlackAccent = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0.1 });
+        if (scene) scene.background = new THREE.Color(0xe5dec9);
       }
     }
 
-    applyThemeMaterials('vintage');
+    applyThemeMaterials('woodcut');
 
     function initThreeJS() {
       const container = document.getElementById('canvas-container');
 
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xdcd0bc);
+      scene.background = new THREE.Color(0xe5dec9);
 
       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
       camera.position.set(0, 8.5, 9.5);
@@ -637,7 +650,7 @@
       controls.minDistance = 5;
       controls.maxDistance = 18;
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
       scene.add(ambientLight);
 
       const dirLight = new THREE.DirectionalLight(0xfff5ea, 1.25);
@@ -698,7 +711,7 @@
       scene.add(boardGroup);
     }
 
-    // High-quality Staunton piece Mesh with double-sided SVG texture standee + Green Felt Pad
+    // High-precision piece model matching the woodcut engraving illustration
     function createPieceMesh(type) {
       const isWhite = type === type.toUpperCase();
       const pieceMat = isWhite ? matWhitePiece : matBlackPiece;
@@ -707,7 +720,7 @@
       const group = new THREE.Group();
       const lowerType = type.toLowerCase();
 
-      // 1. Green Felt Base Pad (Exact Staunton detail)
+      // 1. Green Felt Base Pad (Staunton Base)
       const feltGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.04, 24);
       const feltMesh = new THREE.Mesh(feltGeo, matFeltBase);
       feltMesh.position.y = -0.02;
@@ -727,7 +740,7 @@
       ringMesh.position.y = 0.12;
       group.add(ringMesh);
 
-      // 3. High-Quality Wikimedia SVG Vector Face Standee
+      // 3. High-Res Woodcut Engraved Vector Face Standee
       const tex = textureCache[type] || new THREE.TextureLoader().load(PIECES_SVG[type]);
       const spriteMat = new THREE.MeshStandardMaterial({
         map: tex,
@@ -737,12 +750,12 @@
         roughness: 0.3
       });
 
-      let heightScale = 0.85;
-      if (lowerType === 'k') heightScale = 1.15;
-      else if (lowerType === 'q') heightScale = 1.10;
-      else if (lowerType === 'r') heightScale = 0.90;
-      else if (lowerType === 'b') heightScale = 1.0;
-      else if (lowerType === 'n') heightScale = 0.95;
+      let heightScale = 0.88;
+      if (lowerType === 'k') heightScale = 1.18;
+      else if (lowerType === 'q') heightScale = 1.12;
+      else if (lowerType === 'r') heightScale = 0.92;
+      else if (lowerType === 'b') heightScale = 1.02;
+      else if (lowerType === 'n') heightScale = 0.96;
 
       const planeGeo = new THREE.PlaneGeometry(heightScale, heightScale);
       const spriteMesh = new THREE.Mesh(planeGeo, spriteMat);
@@ -1005,8 +1018,6 @@
         if (currentTurn === userSide || gameMode === 'pvp') {
           pendingPromotion = { fromR, fromC, toR, toC };
 
-          const prefix = isWhite ? 'w' : 'b';
-          const pColor = isWhite ? 'l' : 'd';
           document.getElementById('promoImgQ').src = PIECES_SVG[isWhite ? 'Q' : 'q'];
           document.getElementById('promoImgR').src = PIECES_SVG[isWhite ? 'R' : 'r'];
           document.getElementById('promoImgB').src = PIECES_SVG[isWhite ? 'B' : 'b'];
@@ -1343,7 +1354,6 @@
       turnText.textContent = `${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}'s Turn`;
       badge.className = `turn-badge ${currentTurn}`;
 
-      // Captured Pieces rendered as SVG Images (NO text symbols)
       document.getElementById('capturedWhite').innerHTML = capturedWhite.map(p => 
         `<img src="${PIECES_SVG[p]}" alt="${p}">`
       ).join('');
@@ -1352,7 +1362,6 @@
         `<img src="${PIECES_SVG[p]}" alt="${p}">`
       ).join('');
 
-      // Move Log with piece SVG icons
       const moveLogEl = document.getElementById('moveLog');
       moveLogEl.innerHTML = '';
       for (let i = 0; i < moveHistory.length; i += 2) {
@@ -1409,7 +1418,6 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      // Smooth camera billboarding for 3D piece standees
       pieceMeshes.forEach(p => {
         if (p.mesh.userData && p.mesh.userData.spriteMesh) {
           p.mesh.userData.spriteMesh.rotation.y = camera.rotation.y;
