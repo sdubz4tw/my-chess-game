@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity 3D Chess - Staunton Knight Edition</title>
+  <title>Antigravity 3D Chessboard Environment</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -70,11 +70,6 @@
       -webkit-user-drag: none;
     }
 
-    img {
-      pointer-events: none;
-      -webkit-user-drag: none;
-    }
-
     body {
       font-family: 'Outfit', sans-serif;
       background: #e5dec9;
@@ -128,14 +123,6 @@
       gap: 0.75rem;
     }
 
-    .brand img {
-      width: 34px;
-      height: 34px;
-      vertical-align: middle;
-      pointer-events: none;
-      -webkit-user-drag: none;
-    }
-
     .brand h1 {
       font-family: 'Cinzel', serif;
       font-size: 1.4rem;
@@ -175,260 +162,28 @@
       border-color: rgba(0, 0, 0, 0.25);
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: #ffffff;
-      border: none;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-    }
-
-    /* Sidebar Panel */
-    .hud-body {
+    .hud-footer {
+      pointer-events: auto;
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
-      width: 100%;
-    }
-
-    .sidebar {
-      pointer-events: auto;
+      align-items: center;
       background: var(--hud-bg);
       backdrop-filter: blur(16px);
       border: 1px solid var(--hud-border);
-      padding: 1.25rem;
-      border-radius: 16px;
-      width: 310px;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-    }
-
-    .status-box {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--hud-border);
-    }
-
-    .turn-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 1rem;
-      font-weight: 600;
-    }
-
-    .turn-badge {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #ffffff;
-      border: 1px solid #1c1917;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
-      transition: background 0.3s;
-    }
-
-    .turn-badge.black {
-      background: #1c1917;
-      border: 1px solid #1c1917;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
-    }
-
-    .check-badge {
-      background: #dc2626;
-      color: #fff;
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 0.25rem 0.6rem;
-      border-radius: 6px;
-      letter-spacing: 0.05em;
-      display: none;
-      animation: pulse 1.2s infinite;
-    }
-
-    .history-title {
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-    }
-
-    .move-log {
-      max-height: 140px;
-      overflow-y: auto;
-      font-family: monospace;
-      font-size: 0.85rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.35rem 0.75rem;
-      padding-right: 4px;
-    }
-
-    .move-item {
-      background: rgba(0, 0, 0, 0.04);
-      padding: 0.25rem 0.5rem;
-      border-radius: 6px;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    .captured-tray {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-      min-height: 44px;
-    }
-
-    .captured-row {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.25rem;
-      min-height: 22px;
-    }
-
-    .captured-row img {
-      width: 22px;
-      height: 22px;
-      object-fit: contain;
-      pointer-events: none;
-      -webkit-user-drag: none;
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+      padding: 0.75rem 1.25rem;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      width: max-content;
+      margin: 0 auto;
     }
 
     .camera-tools {
-      pointer-events: auto;
       display: flex;
       gap: 0.5rem;
-    }
-
-    .ai-thinking {
-      display: none;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.85rem;
-      color: #b45309;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
-
-    /* Modal Dialog Overlays */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: rgba(30, 25, 20, 0.65);
-      backdrop-filter: blur(10px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-card {
-      background: rgba(247, 243, 235, 0.96);
-      border: 1px solid var(--hud-border);
-      border-radius: 20px;
-      padding: 2rem;
-      text-align: center;
-      max-width: 440px;
-      width: 90%;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    @keyframes popIn {
-      from { transform: scale(0.85); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .modal-card h2 {
-      font-family: 'Cinzel', serif;
-      font-size: 1.6rem;
-      margin-bottom: 0.5rem;
-      color: #1c1917;
-    }
-
-    .modal-card p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .promo-options {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.75rem;
-    }
-
-    .promo-btn {
-      background: rgba(0, 0, 0, 0.05);
-      border: 1px solid var(--hud-border);
-      border-radius: 12px;
-      padding: 1rem 0.5rem;
-      color: #1c1917;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      outline: none !important;
-    }
-
-    .promo-btn img {
-      width: 48px;
-      height: 48px;
-      object-fit: contain;
-      pointer-events: none;
-      -webkit-user-drag: none;
-    }
-
-    .promo-btn span {
-      font-size: 0.8rem;
-      font-family: inherit;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-
-    .promo-btn:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-      transform: translateY(-3px);
-    }
-
-    .promo-btn:hover span {
-      color: #ffffff;
-    }
-
-    .game-over-banner {
-      font-family: 'Cinzel', serif;
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1c1917;
-      margin-bottom: 0.5rem;
-    }
-
-    /* Clean Subtle Green Overlay Class for Highlights */
-    .highlight {
-      background-color: rgba(76, 175, 80, 0.4) !important;
     }
 
     @media (max-width: 768px) {
       .hud-header { flex-direction: column; gap: 0.75rem; }
-      .sidebar { width: 100%; }
-      .hud-body { flex-direction: column; gap: 1rem; }
     }
   </style>
 </head>
@@ -440,205 +195,62 @@
   <div class="hud">
     <div class="hud-header">
       <div class="brand">
-        <img id="brandIcon" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" alt="Knight Icon">
-        <h1>Staunton Knight Edition</h1>
+        <span style="font-size: 1.5rem;">🎲</span>
+        <h1>3D Chessboard Environment</h1>
       </div>
 
       <div class="controls-top">
         <select id="boardTheme" class="select-input" onchange="changeTheme()">
-          <option value="woodcut" selected>Vintage Engraved Woodcut (3D)</option>
-          <option value="vintage">Natural Boxwood & Rosewood (3D)</option>
-          <option value="porcelain">Cobalt Porcelain (3D)</option>
-          <option value="cyber">Midnight Cyber (3D)</option>
+          <option value="woodcut" selected>Vintage Engraved Woodcut</option>
+          <option value="vintage">Natural Boxwood & Rosewood</option>
+          <option value="porcelain">Cobalt Porcelain</option>
+          <option value="cyber">Midnight Cyber</option>
         </select>
-
-        <select id="gameMode" class="select-input" onchange="changeGameMode()">
-          <option value="ai-easy">vs Computer (Easy)</option>
-          <option value="ai-medium" selected>vs Computer (Medium)</option>
-          <option value="ai-hard">vs Computer (Hard)</option>
-          <option value="pvp">Pass & Play (2 Player)</option>
-        </select>
-
-        <select id="playerSide" class="select-input" onchange="changePlayerSide()">
-          <option value="white" selected>Play as White</option>
-          <option value="black">Play as Black</option>
-        </select>
-
-        <button class="btn btn-primary" onclick="resetGame()">↻ New Game</button>
       </div>
     </div>
 
-    <div class="hud-body">
-      <div class="sidebar">
-        <div class="status-box">
-          <div class="turn-indicator">
-            <div id="turnBadge" class="turn-badge"></div>
-            <span id="turnText">White's Turn</span>
-          </div>
-          <div id="checkBadge" class="check-badge">Check!</div>
-          <div id="aiThinking" class="ai-thinking">
-            <span>⚙️ AI thinking...</span>
-          </div>
-        </div>
-
-        <div class="captured-tray">
-          <div id="capturedWhite" class="captured-row"></div>
-          <div id="capturedBlack" class="captured-row"></div>
-        </div>
-
-        <div class="history-title">Move Log</div>
-        <div id="moveLog" class="move-log"></div>
-      </div>
-
+    <div class="hud-footer">
       <div class="camera-tools">
-        <button class="btn" onclick="setCameraView('perspective')" title="3D Perspective">📷 3D View</button>
-        <button class="btn" onclick="setCameraView('top')" title="Top View">⬇️ Top View</button>
-        <button class="btn" onclick="setCameraView('flip')" title="Rotate Board">🔄 Flip</button>
+        <button class="btn" onclick="setCameraView('perspective')">📷 3D View</button>
+        <button class="btn" onclick="setCameraView('top')">⬇️ Top View</button>
+        <button class="btn" onclick="setCameraView('flip')">🔄 Flip Perspective</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Pawn Promotion Modal -->
-  <div id="promotionModal" class="modal-overlay">
-    <div class="modal-card">
-      <h2>Pawn Promotion</h2>
-      <p>Select piece to replace promoted pawn:</p>
-      <div class="promo-options">
-        <button class="promo-btn" onclick="selectPromotionChoice('Q')">
-          <img id="promoImgQ" src="https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg" alt="Queen">
-          <span>Queen</span>
-        </button>
-        <button class="promo-btn" onclick="selectPromotionChoice('R')">
-          <img id="promoImgR" src="https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg" alt="Rook">
-          <span>Rook</span>
-        </button>
-        <button class="promo-btn" onclick="selectPromotionChoice('B')">
-          <img id="promoImgB" src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg" alt="Bishop">
-          <span>Bishop</span>
-        </button>
-        <button class="promo-btn" onclick="selectPromotionChoice('N')">
-          <img id="promoImgN" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" alt="Knight">
-          <span>Knight</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Game Over Modal -->
-  <div id="gameOverModal" class="modal-overlay">
-    <div class="modal-card">
-      <div id="gameOverTitle" class="game-over-banner">Checkmate!</div>
-      <p id="gameOverMsg">White Wins!</p>
-      <button class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem; margin-top: 1rem;" onclick="closeGameOverModal(); resetGame();">Play Again</button>
     </div>
   </div>
 
   <script>
-    // --- 1. WIKIMEDIA HIGH-QUALITY STAUNTON SVG ASSET URLS ---
-    const PIECES_SVG = {
-      'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
-      'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
-      'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
-      'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-      'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', // Professional Staunton White Knight
-      'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
-
-      'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
-      'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
-      'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
-      'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-      'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', // Professional Staunton Black Knight
-      'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
-    };
-
-    const INITIAL_BOARD = [
-      ['r','n','b','q','k','b','n','r'],
-      ['p','p','p','p','p','p','p','p'],
-      ['','','','','','','',''],
-      ['','','','','','','',''],
-      ['','','','','','','',''],
-      ['','','','','','','',''],
-      ['P','P','P','P','P','P','P','P'],
-      ['R','N','B','Q','K','B','N','R']
-    ];
-
-    let boardState = [];
-    let currentTurn = 'white';
-    let selectedSquare = null;
-    let validMoves = [];
-    let moveHistory = [];
-    let capturedWhite = [];
-    let capturedBlack = [];
-
-    let enPassantTarget = null;
-    let hasMoved = {
-      whiteKing: false, blackKing: false,
-      whiteRookK: false, whiteRookQ: false,
-      blackRookK: false, blackRookQ: false
-    };
-
-    let pendingPromotion = null;
-    let gameMode = 'ai-medium';
-    let userSide = 'white';
-    let currentTheme = 'woodcut';
-    let isGameOver = false;
-
-    // --- 2. THREE.JS SCENE & GRAPHICS ---
+    // --- THREE.JS SCENE, LIGHTING, 3D BOARD, AND ORBIT CONTROLS ---
     let scene, camera, renderer, controls;
     let squareMeshes = [];
-    let pieceMeshes = [];
-    let highlightRing = null;
-    let checkRing = null;
-    let moveMarkers = [];
-    let raycaster, mouse;
+    let currentTheme = 'woodcut';
 
     let matLightSquare, matDarkSquare, matFrame, matFrameGold;
-    let matWhitePiece, matBlackPiece, matWhiteAccent, matBlackAccent;
-    let matFeltBase;
 
     function applyThemeMaterials(themeName) {
-      matFeltBase = new THREE.MeshStandardMaterial({ color: 0x1b4d2e, roughness: 0.8 });
-
       if (themeName === 'porcelain') {
         matLightSquare = new THREE.MeshStandardMaterial({ color: 0xedd6b1, roughness: 0.35 });
         matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.4 });
         matFrame = new THREE.MeshStandardMaterial({ color: 0x1f140e, roughness: 0.2 });
         matFrameGold = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.8 });
-        matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xfaf7f2, roughness: 0.18, metalness: 0.1 });
-        matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x1b3b6f, roughness: 0.2, metalness: 0.25 });
-        matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.7 });
-        matBlackAccent = new THREE.MeshStandardMaterial({ color: 0xc8963e, roughness: 0.3, metalness: 0.7 });
         if (scene) scene.background = new THREE.Color(0x12121e);
       } else if (themeName === 'cyber') {
         matLightSquare = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.2 });
         matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
         matFrame = new THREE.MeshStandardMaterial({ color: 0x020617, roughness: 0.1 });
         matFrameGold = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2, metalness: 0.9 });
-        matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.1, metalness: 0.3 });
-        matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.2, metalness: 0.6 });
-        matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2, metalness: 0.9 });
-        matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.2, metalness: 0.9 });
         if (scene) scene.background = new THREE.Color(0x020617);
       } else if (themeName === 'vintage') {
         matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf2e6ce, roughness: 0.35 });
         matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.4 });
         matFrame = new THREE.MeshStandardMaterial({ color: 0x4a301c, roughness: 0.35 });
         matFrameGold = new THREE.MeshStandardMaterial({ color: 0xc69214, roughness: 0.3, metalness: 0.7 });
-        matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xe8d5b5, roughness: 0.32, metalness: 0.04 });
-        matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x5a301c, roughness: 0.35, metalness: 0.08 });
-        matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.6 });
-        matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x3d2012, roughness: 0.3, metalness: 0.2 });
         if (scene) scene.background = new THREE.Color(0xdcd0bc);
       } else {
-        // 'woodcut' - 3D Solid Engraved Woodcut Theme
+        // 'woodcut' - Vintage Woodcut Engraving
         matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf7f3eb, roughness: 0.3 });
         matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x3c3836, roughness: 0.35 });
         matFrame = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.25 });
         matFrameGold = new THREE.MeshStandardMaterial({ color: 0x78716c, roughness: 0.3, metalness: 0.5 });
-        matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xfbf9f5, roughness: 0.2, metalness: 0.0 });
-        matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x221e1c, roughness: 0.25, metalness: 0.0 });
-        matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0x221e1c, roughness: 0.3, metalness: 0.1 });
-        matBlackAccent = new THREE.MeshStandardMaterial({ color: 0xfbf9f5, roughness: 0.3, metalness: 0.1 });
         if (scene) scene.background = new THREE.Color(0xe5dec9);
       }
     }
@@ -648,12 +260,15 @@
     function initThreeJS() {
       const container = document.getElementById('canvas-container');
 
+      // 1. Create Scene
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0xe5dec9);
 
+      // 2. Perspective Camera
       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
       camera.position.set(0, 8.5, 9.5);
 
+      // 3. WebGL Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -661,13 +276,15 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
+      // 4. OrbitControls (Rotate, Pan, Zoom)
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.maxPolarAngle = Math.PI / 2 - 0.05;
-      controls.minDistance = 5;
-      controls.maxDistance = 18;
+      controls.minDistance = 4;
+      controls.maxDistance = 20;
 
+      // 5. Lighting Setup (Ambient & Directional Light)
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
       scene.add(ambientLight);
 
@@ -683,14 +300,10 @@
       fillLight.position.set(-6, 8, -6);
       scene.add(fillLight);
 
-      raycaster = new THREE.Raycaster();
-      mouse = new THREE.Vector2();
-
+      // 6. Build 3D Board
       buildBoard3D();
-      createSelectionHighlights();
 
       window.addEventListener('resize', onWindowResize);
-      renderer.domElement.addEventListener('pointerdown', onPointerDown);
     }
 
     function buildBoard3D() {
@@ -700,17 +313,20 @@
       const boardGroup = new THREE.Group();
       boardGroup.name = "boardFrame";
 
+      // Outer Wood Frame Slab
       const frameGeo = new THREE.BoxGeometry(9.6, 0.4, 9.6);
       const frameMesh = new THREE.Mesh(frameGeo, matFrame);
       frameMesh.position.y = -0.22;
       frameMesh.receiveShadow = true;
       boardGroup.add(frameMesh);
 
+      // Inner Gold Trim Border
       const trimGeo = new THREE.BoxGeometry(8.5, 0.38, 8.5);
       const trimMesh = new THREE.Mesh(trimGeo, matFrameGold);
       trimMesh.position.y = -0.20;
       boardGroup.add(trimMesh);
 
+      // 64 Alternating 3D Square Boxes
       squareMeshes = [];
       for (let r = 0; r < 8; r++) {
         squareMeshes[r] = [];
@@ -729,835 +345,11 @@
       scene.add(boardGroup);
     }
 
-    // --- 100% FULL 3D SOLID PROCEDURAL GEOMETRIES FOR ALL CHESS PIECES ---
-    function createPieceMesh(type) {
-      const isWhite = type === type.toUpperCase();
-      const pieceMat = isWhite ? matWhitePiece : matBlackPiece;
-      const accentMat = isWhite ? matWhiteAccent : matBlackAccent;
-
-      const group = new THREE.Group();
-      const lowerType = type.toLowerCase();
-
-      // Green Felt Base Pad
-      const feltGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.04, 24);
-      const feltMesh = new THREE.Mesh(feltGeo, matFeltBase);
-      feltMesh.position.y = -0.02;
-      group.add(feltMesh);
-
-      let points = [];
-
-      if (lowerType === 'p') { // PAWN
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.38, 0.06),
-          new THREE.Vector2(0.32, 0.14),
-          new THREE.Vector2(0.18, 0.36),
-          new THREE.Vector2(0.15, 0.50),
-          new THREE.Vector2(0.22, 0.54),
-          new THREE.Vector2(0.18, 0.58),
-          new THREE.Vector2(0, 0.65)
-        ];
-        const pawnBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
-        pawnBody.castShadow = true;
-        pawnBody.receiveShadow = true;
-        group.add(pawnBody);
-
-        const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), pieceMat);
-        ballMesh.position.y = 0.72;
-        ballMesh.castShadow = true;
-        group.add(ballMesh);
-
-      } else if (lowerType === 'r') { // ROOK
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.38, 0.06),
-          new THREE.Vector2(0.33, 0.15),
-          new THREE.Vector2(0.25, 0.68),
-          new THREE.Vector2(0.34, 0.78),
-          new THREE.Vector2(0.34, 0.98),
-          new THREE.Vector2(0.25, 0.98),
-          new THREE.Vector2(0, 0.98)
-        ];
-        const rookBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
-        rookBody.castShadow = true;
-        rookBody.receiveShadow = true;
-        group.add(rookBody);
-
-        for (let i = 0; i < 4; i++) {
-          const block = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.12), pieceMat);
-          const angle = (i * Math.PI) / 2;
-          block.position.set(Math.cos(angle) * 0.28, 1.04, Math.sin(angle) * 0.28);
-          block.castShadow = true;
-          group.add(block);
-        }
-
-      } else if (lowerType === 'n') { // KNIGHT (High-Quality Professional Staunton Knight Sculpt)
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.38, 0.06),
-          new THREE.Vector2(0.32, 0.15),
-          new THREE.Vector2(0.24, 0.45),
-          new THREE.Vector2(0.28, 0.52),
-          new THREE.Vector2(0, 0.55)
-        ];
-        const knightBase = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
-        knightBase.castShadow = true;
-        group.add(knightBase);
-
-        // Highly Detailed 3D Staunton Knight Horse Head
-        const headGroup = new THREE.Group();
-        
-        // Neck & Arched Back
-        const mainHead = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.52, 0.42), pieceMat);
-        mainHead.position.set(0, 0.78, 0.04);
-        mainHead.rotation.x = 0.22;
-        mainHead.castShadow = true;
-        headGroup.add(mainHead);
-
-        // Snout & Muzzle
-        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.28, 0.30), pieceMat);
-        snout.position.set(0, 0.68, 0.26);
-        snout.rotation.x = 0.48;
-        snout.castShadow = true;
-        headGroup.add(snout);
-
-        // Carved Mane Ridge along back
-        const mane = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.45, 0.18), accentMat);
-        mane.position.set(0, 0.82, -0.16);
-        mane.rotation.x = -0.15;
-        headGroup.add(mane);
-
-        // Pointed Ears
-        const ear1 = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 4), pieceMat);
-        const ear2 = ear1.clone();
-        ear1.position.set(-0.08, 1.08, -0.06);
-        ear2.position.set(0.08, 1.08, -0.06);
-        ear1.castShadow = true;
-        ear2.castShadow = true;
-        headGroup.add(ear1);
-        headGroup.add(ear2);
-
-        group.add(headGroup);
-
-      } else if (lowerType === 'b') { // BISHOP
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.38, 0.06),
-          new THREE.Vector2(0.32, 0.15),
-          new THREE.Vector2(0.19, 0.65),
-          new THREE.Vector2(0.28, 0.75),
-          new THREE.Vector2(0.22, 0.96),
-          new THREE.Vector2(0, 1.10)
-        ];
-        const bishopBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
-        bishopBody.castShadow = true;
-        bishopBody.receiveShadow = true;
-        group.add(bishopBody);
-
-        const miter = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), pieceMat);
-        miter.scale.set(1, 1.35, 1);
-        miter.position.y = 1.05;
-        miter.castShadow = true;
-        group.add(miter);
-
-        const topBall = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 16), accentMat);
-        topBall.position.y = 1.38;
-        topBall.castShadow = true;
-        group.add(topBall);
-
-      } else if (lowerType === 'q') { // QUEEN
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.40, 0.06),
-          new THREE.Vector2(0.34, 0.15),
-          new THREE.Vector2(0.21, 0.75),
-          new THREE.Vector2(0.35, 0.96),
-          new THREE.Vector2(0.31, 1.25),
-          new THREE.Vector2(0, 1.35)
-        ];
-        const queenBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
-        queenBody.castShadow = true;
-        queenBody.receiveShadow = true;
-        group.add(queenBody);
-
-        const crownRing = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.03, 12, 24), accentMat);
-        crownRing.rotation.x = Math.PI / 2;
-        crownRing.position.y = 1.25;
-        group.add(crownRing);
-
-        const topBall = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), accentMat);
-        topBall.position.y = 1.42;
-        topBall.castShadow = true;
-        group.add(topBall);
-
-      } else if (lowerType === 'k') { // KING
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.42, 0.06),
-          new THREE.Vector2(0.35, 0.15),
-          new THREE.Vector2(0.23, 0.8),
-          new THREE.Vector2(0.36, 1.05),
-          new THREE.Vector2(0.30, 1.32),
-          new THREE.Vector2(0, 1.38)
-        ];
-        const kingBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
-        kingBody.castShadow = true;
-        kingBody.receiveShadow = true;
-        group.add(kingBody);
-
-        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.07, 0.07), accentMat);
-        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.26, 0.07), accentMat);
-        crossH.position.y = 1.50;
-        crossV.position.y = 1.50;
-        crossH.castShadow = true;
-        crossV.castShadow = true;
-        group.add(crossH);
-        group.add(crossV);
-      }
-
-      // Waist Ring Accent
-      const ringGeo = new THREE.TorusGeometry(points[2].x * 0.9, 0.025, 12, 24);
-      const ringMesh = new THREE.Mesh(ringGeo, accentMat);
-      ringMesh.rotation.x = Math.PI / 2;
-      ringMesh.position.y = points[2].y;
-      group.add(ringMesh);
-
-      group.scale.set(0.9, 0.9, 0.9);
-      return group;
-    }
-
-    function createSelectionHighlights() {
-      // Clean amber ring highlight for selection
-      const ringGeo = new THREE.RingGeometry(0.35, 0.46, 32);
-      highlightRing = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xd97706, side: THREE.DoubleSide }));
-      highlightRing.rotation.x = Math.PI / 2;
-      highlightRing.position.y = 0.105;
-      highlightRing.visible = false;
-      scene.add(highlightRing);
-
-      // Clean red warning ring for King in check
-      const checkGeo = new THREE.RingGeometry(0.32, 0.48, 32);
-      checkRing = new THREE.Mesh(checkGeo, new THREE.MeshBasicMaterial({ color: 0xdc2626, side: THREE.DoubleSide }));
-      checkRing.rotation.x = Math.PI / 2;
-      checkRing.position.y = 0.106;
-      checkRing.visible = false;
-      scene.add(checkRing);
-    }
-
-    function update3DPieces() {
-      pieceMeshes.forEach(p => scene.remove(p.mesh));
-      pieceMeshes = [];
-
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const type = boardState[r][c];
-          if (type) {
-            const mesh = createPieceMesh(type);
-            mesh.position.set(c - 3.5, 0.1, r - 3.5);
-            if (type === type.toLowerCase()) {
-              mesh.rotation.y = Math.PI; // Black pieces face White
-            }
-            scene.add(mesh);
-            pieceMeshes.push({ mesh, row: r, col: c, type });
-          }
-        }
-      }
-    }
-
-    // Clean, subtle semi-transparent move markers (No glowing flickering box shadow artifacts!)
-    function renderValidMoveMarkers() {
-      moveMarkers.forEach(m => scene.remove(m));
-      moveMarkers = [];
-
-      validMoves.forEach(m => {
-        const isCapture = boardState[m.r][m.c] !== '' || m.isEnPassant;
-        const markerGeo = (isCapture || m.isCastling)
-          ? new THREE.RingGeometry(0.34, 0.46, 32)
-          : new THREE.CircleGeometry(0.20, 32);
-        
-        // Clean semi-transparent green overlay (rgba(76, 175, 80, 0.4) -> 0x4caf50 at 0.4 opacity)
-        const markerMat = new THREE.MeshBasicMaterial({
-          color: m.isCastling ? 0x2563eb : (isCapture ? 0xdc2626 : 0x4caf50),
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.4,
-          depthWrite: false
-        });
-        const markerMesh = new THREE.Mesh(markerGeo, markerMat);
-        markerMesh.rotation.x = Math.PI / 2;
-        markerMesh.position.set(m.c - 3.5, 0.102, m.r - 3.5); // Resting cleanly above square
-        scene.add(markerMesh);
-        moveMarkers.push(markerMesh);
-      });
-    }
-
-    // --- 3. MODULAR FIDE CHESS ENGINE ---
-
-    function cloneBoard(board) {
-      return board.map(row => [...row]);
-    }
-
-    function isWhitePiece(p) { return p && p === p.toUpperCase(); }
-    function isBlackPiece(p) { return p && p === p.toLowerCase(); }
-    function getPieceColor(p) { return isWhitePiece(p) ? 'white' : 'black'; }
-
-    function findKing(color, board) {
-      const kingChar = color === 'white' ? 'K' : 'k';
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          if (board[r][c] === kingChar) return { r, c };
-        }
-      }
-      return null;
-    }
-
-    function isSquareAttacked(targetR, targetC, attackerColor, board) {
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const piece = board[r][c];
-          if (piece && getPieceColor(piece) === attackerColor) {
-            const moves = getPseudoLegalMoves(r, c, board, true);
-            if (moves.some(m => m.r === targetR && m.c === targetC)) return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function isInCheck(color, board) {
-      const kingPos = findKing(color, board);
-      if (!kingPos) return false;
-      const oppColor = color === 'white' ? 'black' : 'white';
-      return isSquareAttacked(kingPos.r, kingPos.c, oppColor, board);
-    }
-
-    function getPseudoLegalMoves(r, c, board, attackOnly = false) {
-      const piece = board[r][c];
-      if (!piece) return [];
-      const color = getPieceColor(piece);
-      const moves = [];
-      const type = piece.toLowerCase();
-
-      const addMove = (nr, nc) => {
-        if (nr < 0 || nr > 7 || nc < 0 || nc > 7) return false;
-        const target = board[nr][nc];
-        if (!target) { moves.push({ r: nr, c: nc }); return true; }
-        if (getPieceColor(target) !== color) { moves.push({ r: nr, c: nc }); }
-        return false;
-      };
-
-      if (type === 'p') {
-        const dir = color === 'white' ? -1 : 1;
-        const startR = color === 'white' ? 6 : 1;
-
-        if (!attackOnly) {
-          if (r + dir >= 0 && r + dir <= 7 && !board[r + dir][c]) {
-            moves.push({ r: r + dir, c });
-            if (r === startR && !board[r + 2 * dir][c]) {
-              moves.push({ r: r + 2 * dir, c, isDoubleStep: true });
-            }
-          }
-        }
-
-        [-1, 1].forEach(dc => {
-          const nr = r + dir, nc = c + dc;
-          if (nr >= 0 && nr <= 7 && nc >= 0 && nc <= 7) {
-            if (attackOnly) {
-              moves.push({ r: nr, c: nc });
-            } else {
-              const target = board[nr][nc];
-              if (target && getPieceColor(target) !== color) {
-                moves.push({ r: nr, c: nc });
-              }
-              if (enPassantTarget && enPassantTarget.r === nr && enPassantTarget.c === nc) {
-                moves.push({ r: nr, c: nc, isEnPassant: true });
-              }
-            }
-          }
-        });
-      } else if (type === 'n') {
-        [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc]) => addMove(r+dr, c+dc));
-      } else if (type === 'k') {
-        for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++) if(dr||dc) addMove(r+dr, c+dc);
-
-        if (!attackOnly) {
-          if (canCastle(color, 'kingside', board)) {
-            moves.push({ r: r, c: 6, isCastling: 'kingside' });
-          }
-          if (canCastle(color, 'queenside', board)) {
-            moves.push({ r: r, c: 2, isCastling: 'queenside' });
-          }
-        }
-      } else {
-        const dirs = (type === 'r' || type === 'q') ? [[-1,0],[1,0],[0,-1],[0,1]] : [];
-        if (type === 'b' || type === 'q') dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
-        dirs.forEach(([dr,dc]) => {
-          let nr = r+dr, nc = c+dc;
-          while(addMove(nr,nc)) { nr += dr; nc += dc; }
-        });
-      }
-
-      return moves;
-    }
-
-    function canCastle(color, side, board) {
-      const isWhite = color === 'white';
-      const kr = isWhite ? 7 : 0;
-      const oppColor = isWhite ? 'black' : 'white';
-      const rookChar = isWhite ? 'R' : 'r';
-
-      const kingMoved = isWhite ? hasMoved.whiteKing : hasMoved.blackKing;
-      if (kingMoved) return false;
-
-      if (isInCheck(color, board)) return false;
-
-      if (side === 'kingside') {
-        const rookMoved = isWhite ? hasMoved.whiteRookK : hasMoved.blackRookK;
-        if (rookMoved || board[kr][7] !== rookChar) return false;
-        if (board[kr][5] || board[kr][6]) return false;
-        if (isSquareAttacked(kr, 5, oppColor, board) || isSquareAttacked(kr, 6, oppColor, board)) return false;
-        return true;
-      } else if (side === 'queenside') {
-        const rookMoved = isWhite ? hasMoved.whiteRookQ : hasMoved.blackRookQ;
-        if (rookMoved || board[kr][0] !== rookChar) return false;
-        if (board[kr][1] || board[kr][2] || board[kr][3]) return false;
-        if (isSquareAttacked(kr, 3, oppColor, board) || isSquareAttacked(kr, 2, oppColor, board)) return false;
-        return true;
-      }
-
-      return false;
-    }
-
-    function isValidMove(fromR, fromC, toR, toC, board) {
-      const piece = board[fromR][fromC];
-      if (!piece) return false;
-      const color = getPieceColor(piece);
-
-      const simBoard = cloneBoard(board);
-      
-      if (piece.toLowerCase() === 'p' && enPassantTarget && toR === enPassantTarget.r && toC === enPassantTarget.c) {
-        simBoard[fromR][toC] = '';
-      }
-
-      simBoard[toR][toC] = piece;
-      simBoard[fromR][fromC] = '';
-
-      return !isInCheck(color, simBoard);
-    }
-
-    function getLegalMoves(r, c) {
-      const piece = boardState[r][c];
-      if (!piece) return [];
-      const color = getPieceColor(piece);
-      if (color !== currentTurn) return [];
-
-      const pseudoMoves = getPseudoLegalMoves(r, c, boardState);
-      return pseudoMoves.filter(m => isValidMove(r, c, m.r, m.c, boardState));
-    }
-
-    function getAllLegalMovesForColor(color, board) {
-      const allMoves = [];
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const piece = board[r][c];
-          if (piece && getPieceColor(piece) === color) {
-            const origTurn = currentTurn;
-            currentTurn = color;
-            const pseudo = getPseudoLegalMoves(r, c, board);
-            const legal = pseudo.filter(m => isValidMove(r, c, m.r, m.c, board));
-            currentTurn = origTurn;
-            legal.forEach(m => allMoves.push({ fromR: r, fromC: c, toR: m.r, toC: m.c, ...m }));
-          }
-        }
-      }
-      return allMoves;
-    }
-
-    // --- 4. EXECUTING MOVES & GAME STATE ---
-
-    function makeMove(fromR, fromC, toR, toC, promotionChoice = null) {
-      if (isGameOver) return;
-
-      const piece = boardState[fromR][fromC];
-      const target = boardState[toR][toC];
-      const isWhite = isWhitePiece(piece);
-
-      if (piece.toLowerCase() === 'p' && (toR === 0 || toR === 7) && !promotionChoice) {
-        if (currentTurn === userSide || gameMode === 'pvp') {
-          pendingPromotion = { fromR, fromC, toR, toC };
-
-          document.getElementById('promoImgQ').src = PIECES_SVG[isWhite ? 'Q' : 'q'];
-          document.getElementById('promoImgR').src = PIECES_SVG[isWhite ? 'R' : 'r'];
-          document.getElementById('promoImgB').src = PIECES_SVG[isWhite ? 'B' : 'b'];
-          document.getElementById('promoImgN').src = PIECES_SVG[isWhite ? 'N' : 'n'];
-
-          document.getElementById('promotionModal').style.display = 'flex';
-          return;
-        } else {
-          promotionChoice = isWhite ? 'Q' : 'q';
-        }
-      }
-
-      if (target) {
-        if (isWhitePiece(target)) capturedWhite.push(target);
-        else capturedBlack.push(target);
-      }
-
-      const isEP = piece.toLowerCase() === 'p' && enPassantTarget && toR === enPassantTarget.r && toC === enPassantTarget.c;
-      if (isEP) {
-        const epPawn = boardState[fromR][toC];
-        if (epPawn) {
-          if (isWhitePiece(epPawn)) capturedWhite.push(epPawn);
-          else capturedBlack.push(epPawn);
-        }
-        boardState[fromR][toC] = '';
-      }
-
-      if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
-        if (toC === 6) {
-          boardState[fromR][5] = boardState[fromR][7];
-          boardState[fromR][7] = '';
-          moveHistory.push({ notation: 'O-O', piece });
-        } else if (toC === 2) {
-          boardState[fromR][3] = boardState[fromR][0];
-          boardState[fromR][0] = '';
-          moveHistory.push({ notation: 'O-O-O', piece });
-        }
-      } else {
-        const files = ['a','b','c','d','e','f','g','h'];
-        const pieceSym = piece.toUpperCase() === 'P' ? '' : piece.toUpperCase();
-        const capSym = (target || isEP) ? 'x' : '';
-        const notation = `${pieceSym}${files[fromC]}${8-fromR}${capSym}${files[toC]}${8-toR}`;
-        moveHistory.push({ notation, piece });
-      }
-
-      boardState[toR][toC] = promotionChoice ? (isWhite ? promotionChoice.toUpperCase() : promotionChoice.toLowerCase()) : piece;
-      boardState[fromR][fromC] = '';
-
-      if (piece.toLowerCase() === 'p' && Math.abs(toR - fromR) === 2) {
-        enPassantTarget = { r: (fromR + toR) / 2, c: fromC };
-      } else {
-        enPassantTarget = null;
-      }
-
-      if (piece === 'K') hasMoved.whiteKing = true;
-      if (piece === 'k') hasMoved.blackKing = true;
-      if (piece === 'R' && fromR === 7 && fromC === 7) hasMoved.whiteRookK = true;
-      if (piece === 'R' && fromR === 7 && fromC === 0) hasMoved.whiteRookQ = true;
-      if (piece === 'r' && fromR === 0 && fromC === 7) hasMoved.blackRookK = true;
-      if (piece === 'r' && fromR === 0 && fromC === 0) hasMoved.blackRookQ = true;
-
-      currentTurn = currentTurn === 'white' ? 'black' : 'white';
-      selectedSquare = null;
-      validMoves = [];
-      if (highlightRing) highlightRing.visible = false;
-
-      update3DPieces();
-      renderValidMoveMarkers();
-      updateHUD();
-
-      checkGameState();
-
-      if (!isGameOver && gameMode !== 'pvp' && currentTurn !== userSide) {
-        setTimeout(triggerAIMove, 500);
-      }
-    }
-
-    function selectPromotionChoice(choice) {
-      document.getElementById('promotionModal').style.display = 'none';
-      if (pendingPromotion) {
-        const { fromR, fromC, toR, toC } = pendingPromotion;
-        pendingPromotion = null;
-        makeMove(fromR, fromC, toR, toC, choice);
-      }
-    }
-
-    function checkGameState() {
-      const legalMoves = getAllLegalMovesForColor(currentTurn, boardState);
-      const checkBadge = document.getElementById('checkBadge');
-      const playerInCheck = isInCheck(currentTurn, boardState);
-
-      if (playerInCheck) {
-        checkBadge.style.display = 'inline-block';
-        const kingPos = findKing(currentTurn, boardState);
-        if (kingPos && checkRing) {
-          checkRing.position.set(kingPos.c - 3.5, 0.106, kingPos.r - 3.5);
-          checkRing.visible = true;
-        }
-      } else {
-        checkBadge.style.display = 'none';
-        if (checkRing) checkRing.visible = false;
-      }
-
-      if (legalMoves.length === 0) {
-        isGameOver = true;
-        const gameOverModal = document.getElementById('gameOverModal');
-        const titleEl = document.getElementById('gameOverTitle');
-        const msgEl = document.getElementById('gameOverMsg');
-
-        if (playerInCheck) {
-          const winner = currentTurn === 'white' ? "Black" : "White";
-          titleEl.textContent = "Checkmate!";
-          msgEl.textContent = `${winner} Wins!`;
-        } else {
-          titleEl.textContent = "Draw by Stalemate!";
-          msgEl.textContent = "No legal moves remaining.";
-        }
-
-        gameOverModal.style.display = 'flex';
-      }
-    }
-
-    function closeGameOverModal() {
-      document.getElementById('gameOverModal').style.display = 'none';
-    }
-
     function changeTheme() {
       currentTheme = document.getElementById('boardTheme').value;
       document.body.setAttribute('data-theme', currentTheme);
       applyThemeMaterials(currentTheme);
       buildBoard3D();
-      update3DPieces();
-      renderValidMoveMarkers();
-    }
-
-    function initGame() {
-      boardState = INITIAL_BOARD.map(row => [...row]);
-      currentTurn = 'white';
-      selectedSquare = null;
-      validMoves = [];
-      moveHistory = [];
-      capturedWhite = [];
-      capturedBlack = [];
-      isGameOver = false;
-      enPassantTarget = null;
-      pendingPromotion = null;
-
-      hasMoved = {
-        whiteKing: false, blackKing: false,
-        whiteRookK: false, whiteRookQ: false,
-        blackRookK: false, blackRookQ: false
-      };
-
-      document.getElementById('checkBadge').style.display = 'none';
-      document.getElementById('promotionModal').style.display = 'none';
-      document.getElementById('gameOverModal').style.display = 'none';
-      if (checkRing) checkRing.visible = false;
-
-      update3DPieces();
-      updateHUD();
-      if (highlightRing) highlightRing.visible = false;
-      renderValidMoveMarkers();
-
-      if (gameMode !== 'pvp' && userSide === 'black') {
-        setTimeout(triggerAIMove, 600);
-      }
-    }
-
-    // --- 5. MINIMAX AI COMPUTER OPPONENT ---
-    const PIECE_VALUES = { 'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000 };
-
-    function evaluateBoard(board) {
-      let score = 0;
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const piece = board[r][c];
-          if (piece) {
-            const val = PIECE_VALUES[piece.toLowerCase()] || 0;
-            if (isWhitePiece(piece)) score += val;
-            else score -= val;
-          }
-        }
-      }
-      return score;
-    }
-
-    function minimax(depth, alpha, beta, isMaximizing) {
-      if (depth === 0) return evaluateBoard(boardState);
-
-      const color = isMaximizing ? 'white' : 'black';
-      const moves = getAllLegalMovesForColor(color, boardState);
-      if (moves.length === 0) return evaluateBoard(boardState);
-
-      if (isMaximizing) {
-        let maxEval = -Infinity;
-        for (let m of moves) {
-          const tempFrom = boardState[m.fromR][m.fromC];
-          const tempTo = boardState[m.toR][m.toC];
-          boardState[m.toR][m.toC] = tempFrom;
-          boardState[m.fromR][m.fromC] = '';
-
-          const evaluation = minimax(depth - 1, alpha, beta, false);
-
-          boardState[m.fromR][m.fromC] = tempFrom;
-          boardState[m.toR][m.toC] = tempTo;
-
-          maxEval = Math.max(maxEval, evaluation);
-          alpha = Math.max(alpha, evaluation);
-          if (beta <= alpha) break;
-        }
-        return maxEval;
-      } else {
-        let minEval = Infinity;
-        for (let m of moves) {
-          const tempFrom = boardState[m.fromR][m.fromC];
-          const tempTo = boardState[m.toR][m.toC];
-          boardState[m.toR][m.toC] = tempFrom;
-          boardState[m.fromR][m.fromC] = '';
-
-          const evaluation = minimax(depth - 1, alpha, beta, true);
-
-          boardState[m.fromR][m.fromC] = tempFrom;
-          boardState[m.toR][m.toC] = tempTo;
-
-          minEval = Math.min(minEval, evaluation);
-          beta = Math.min(beta, evaluation);
-          if (beta <= alpha) break;
-        }
-        return minEval;
-      }
-    }
-
-    function triggerAIMove() {
-      if (isGameOver) return;
-      const aiColor = userSide === 'white' ? 'black' : 'white';
-      const moves = getAllLegalMovesForColor(aiColor, boardState);
-      if (moves.length === 0) return;
-
-      document.getElementById('aiThinking').style.display = 'flex';
-
-      setTimeout(() => {
-        let bestMove = null;
-        const isMaximizing = aiColor === 'white';
-
-        if (gameMode === 'ai-easy') {
-          bestMove = moves[Math.floor(Math.random() * moves.length)];
-        } else {
-          const depth = gameMode === 'ai-hard' ? 3 : 2;
-          let bestVal = isMaximizing ? -Infinity : Infinity;
-
-          moves.sort(() => Math.random() - 0.5);
-
-          for (let m of moves) {
-            const tempFrom = boardState[m.fromR][m.fromC];
-            const tempTo = boardState[m.toR][m.toC];
-            boardState[m.toR][m.toC] = tempFrom;
-            boardState[m.fromR][m.fromC] = '';
-
-            const val = minimax(depth - 1, -Infinity, Infinity, !isMaximizing);
-
-            boardState[m.fromR][m.fromC] = tempFrom;
-            boardState[m.toR][m.toC] = tempTo;
-
-            if (isMaximizing ? (val > bestVal) : (val < bestVal)) {
-              bestVal = val;
-              bestMove = m;
-            }
-          }
-        }
-
-        document.getElementById('aiThinking').style.display = 'none';
-        if (bestMove) {
-          makeMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC);
-        }
-      }, 100);
-    }
-
-    // --- 6. USER INTERACTION & RAYCASTING ---
-    function onPointerDown(event) {
-      if (isGameOver || (gameMode !== 'pvp' && currentTurn !== userSide)) return;
-
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(scene.children, true);
-
-      let hitSquare = null;
-      for (let hit of intersects) {
-        let obj = hit.object;
-        while (obj) {
-          if (obj.userData && obj.userData.row !== undefined) {
-            hitSquare = obj.userData;
-            break;
-          }
-          obj = obj.parent;
-        }
-        if (hitSquare) break;
-      }
-
-      if (!hitSquare) return;
-      const { row: r, col: c } = hitSquare;
-
-      const clickedPiece = boardState[r][c];
-      const clickedColor = getPieceColor(clickedPiece);
-
-      if (clickedColor === currentTurn) {
-        selectedSquare = { r, c };
-        validMoves = getLegalMoves(r, c);
-        highlightRing.position.set(c - 3.5, 0.105, r - 3.5);
-        highlightRing.visible = true;
-        renderValidMoveMarkers();
-        return;
-      }
-
-      if (selectedSquare) {
-        const isLegal = validMoves.some(m => m.r === r && m.c === c);
-        if (isLegal) {
-          makeMove(selectedSquare.r, selectedSquare.c, r, c);
-        } else {
-          selectedSquare = null;
-          validMoves = [];
-          highlightRing.visible = false;
-          renderValidMoveMarkers();
-        }
-      }
-    }
-
-    // --- 7. HUD & CONTROL UPDATES ---
-    function updateHUD() {
-      const turnText = document.getElementById('turnText');
-      const badge = document.getElementById('turnBadge');
-
-      turnText.textContent = `${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}'s Turn`;
-      badge.className = `turn-badge ${currentTurn}`;
-
-      document.getElementById('capturedWhite').innerHTML = capturedWhite.map(p => 
-        `<img src="${PIECES_SVG[p]}" alt="${p}">`
-      ).join('');
-      
-      document.getElementById('capturedBlack').innerHTML = capturedBlack.map(p => 
-        `<img src="${PIECES_SVG[p]}" alt="${p}">`
-      ).join('');
-
-      const moveLogEl = document.getElementById('moveLog');
-      moveLogEl.innerHTML = '';
-      for (let i = 0; i < moveHistory.length; i += 2) {
-        const moveNum = Math.floor(i / 2) + 1;
-        const wMove = moveHistory[i];
-        const bMove = moveHistory[i + 1];
-
-        const wIcon = wMove ? `<img src="${PIECES_SVG[wMove.piece]}" width="16" height="16" style="vertical-align:middle;">` : '';
-        const bIcon = bMove ? `<img src="${PIECES_SVG[bMove.piece]}" width="16" height="16" style="vertical-align:middle;">` : '';
-        
-        const div = document.createElement('div');
-        div.className = 'move-item';
-        div.innerHTML = `${moveNum}. ${wIcon} ${wMove ? wMove.notation : ''} ${bIcon} ${bMove ? bMove.notation : ''}`;
-        moveLogEl.appendChild(div);
-      }
-      moveLogEl.scrollTop = moveLogEl.scrollHeight;
-    }
-
-    function changeGameMode() {
-      gameMode = document.getElementById('gameMode').value;
-      initGame();
-    }
-
-    function changePlayerSide() {
-      userSide = document.getElementById('playerSide').value;
-      if (userSide === 'black') setCameraView('flip');
-      else setCameraView('perspective');
-      initGame();
     }
 
     function setCameraView(view) {
@@ -1573,10 +365,6 @@
       controls.update();
     }
 
-    function resetGame() {
-      initGame();
-    }
-
     function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -1590,7 +378,6 @@
     }
 
     initThreeJS();
-    initGame();
     animate();
   </script>
 </body>
