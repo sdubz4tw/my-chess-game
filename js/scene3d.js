@@ -30,14 +30,11 @@ export class Scene3D {
   }
 
   init() {
-    // 1. Scene setup
     this.scene = new THREE.Scene();
 
-    // 2. Camera setup
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     this.camera.position.set(0, 8.5, 9.5);
 
-    // 3. WebGLRenderer with soft shadow maps and performance tuning
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -45,7 +42,6 @@ export class Scene3D {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. OrbitControls
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
@@ -53,7 +49,6 @@ export class Scene3D {
     this.controls.minDistance = 4.5;
     this.controls.maxDistance = 20;
 
-    // 5. Lighting Architecture
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     this.scene.add(ambientLight);
 
@@ -69,7 +64,6 @@ export class Scene3D {
     fillLight.position.set(-6, 8, -6);
     this.scene.add(fillLight);
 
-    // Load Wood Materials
     this.materials = createWoodMaterials();
 
     this.applyThemeMaterials('woodcut');
@@ -110,7 +104,6 @@ export class Scene3D {
         bg: new THREE.Color(0xdcd0bc)
       };
     } else {
-      // 'woodcut'
       this.themeMaterials = {
         lightSq: new THREE.MeshStandardMaterial({ color: 0xf7f3eb, roughness: 0.3 }),
         darkSq: new THREE.MeshStandardMaterial({ color: 0x3c3836, roughness: 0.35 }),
@@ -179,7 +172,6 @@ export class Scene3D {
   }
 
   updatePieces(boardState) {
-    // Memory Disposal of old piece meshes
     this.pieceMeshes.forEach(p => {
       this.disposeObject(p.mesh);
       this.scene.remove(p.mesh);
@@ -193,7 +185,7 @@ export class Scene3D {
           const mesh = build3DPieceMesh(type, this.materials);
           mesh.position.set(c - 3.5, 0.1, r - 3.5);
           if (type === type.toLowerCase()) {
-            mesh.rotation.y = Math.PI; // Face Opponent
+            mesh.rotation.y = Math.PI;
           }
           this.scene.add(mesh);
           this.pieceMeshes.push({ mesh, row: r, col: c, type });
@@ -305,6 +297,13 @@ export class Scene3D {
 
   animate() {
     requestAnimationFrame(() => this.animate());
+
+    this.pieceMeshes.forEach(p => {
+      if (p.mesh.userData && p.mesh.userData.spriteMesh) {
+        p.mesh.userData.spriteMesh.rotation.y = this.camera.rotation.y;
+      }
+    });
+
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }

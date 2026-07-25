@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity Photorealistic 3D Chess</title>
+  <title>Antigravity 3D Chess - Smiling Donkey Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -129,9 +129,9 @@
     }
 
     .brand img {
-      width: 32px;
-      height: 32px;
-      vertical-align: middle;
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
       pointer-events: none;
       -webkit-user-drag: none;
     }
@@ -439,8 +439,8 @@
   <div class="hud">
     <div class="hud-header">
       <div class="brand">
-        <img id="brandIcon" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" alt="Knight Icon">
-        <h1>Photorealistic 3D Chess</h1>
+        <img id="brandIcon" src="assets/donkey_knight.png" alt="Donkey Knight">
+        <h1>Donkey Knight 3D Chess</h1>
       </div>
 
       <div class="controls-top">
@@ -516,8 +516,8 @@
           <span>Bishop</span>
         </button>
         <button class="promo-btn" data-choice="N">
-          <img id="promoImgN" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" alt="Knight">
-          <span>Knight</span>
+          <img id="promoImgN" src="assets/donkey_knight.png" alt="Donkey Knight">
+          <span>Donkey (Knight)</span>
         </button>
       </div>
     </div>
@@ -536,19 +536,20 @@
   <script type="module">
     import { ChessEngine } from './js/engine.js';
     import { Scene3D } from './js/scene3d.js';
+    import { dataUrlDonkey } from './js/pieces3d.js';
 
     const PIECES_SVG = {
       'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
       'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
       'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
       'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-      'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+      'N': 'assets/donkey_knight.png',
       'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
       'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
       'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
       'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
       'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-      'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+      'n': 'assets/donkey_knight.png',
       'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
     };
 
