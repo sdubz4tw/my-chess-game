@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity 3D Chess - Admin Customizer Edition</title>
+  <title>Antigravity 3D Chess - Cinematic Capture Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -506,7 +506,7 @@
     <div class="hud-header">
       <div class="brand">
         <img id="brandIcon" src="assets/donkey_knight.png" alt="Donkey Knight">
-        <h1>3D Chess Customizer</h1>
+        <h1>Cinematic 3D Chess</h1>
       </div>
 
       <div class="controls-top">
@@ -696,7 +696,6 @@
         startNewGame();
       });
 
-      // Admin Modal Events
       document.getElementById('btnAdmin').addEventListener('click', () => {
         buildAdminGrid();
         document.getElementById('adminModal').style.display = 'flex';
@@ -765,7 +764,6 @@
         grid.appendChild(card);
       });
 
-      // Bind input file listeners
       grid.querySelectorAll('.admin-file-input').forEach(input => {
         input.addEventListener('change', handleAdminFileUpload);
       });
@@ -885,6 +883,20 @@
     }
 
     function executeMove(fromR, fromC, toR, toC, promoChoice = null) {
+      const target = engine.board[toR][toC];
+      const isEP = engine.board[fromR][fromC].toLowerCase() === 'p' && engine.enPassantTarget && toR === engine.enPassantTarget.r && toC === engine.enPassantTarget.c;
+      const isCapture = !!target || isEP;
+
+      if (isCapture && !promoChoice) {
+        scene3d.triggerCaptureCutscene(fromR, fromC, toR, toC, () => {
+          finishMoveExecution(fromR, fromC, toR, toC, promoChoice);
+        });
+      } else {
+        finishMoveExecution(fromR, fromC, toR, toC, promoChoice);
+      }
+    }
+
+    function finishMoveExecution(fromR, fromC, toR, toC, promoChoice) {
       const res = engine.executeMove(fromR, fromC, toR, toC, promoChoice);
 
       if (res && res.needsPromotion) {
