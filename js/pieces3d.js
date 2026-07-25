@@ -142,11 +142,7 @@ export function clearCustomPiece(pieceType) {
 export function clearAllCustomizations() {
   Object.keys(customPieceTextures).forEach(k => delete customPieceTextures[k]);
   Object.keys(customPieceModels).forEach(k => delete customPieceModels[k]);
-  const types = ['P','N','B','R','Q','K','p','n','b','r','q','k'];
-  types.forEach(t => {
-    localStorage.removeItem(`custom_piece_img_${t}`);
-    localStorage.removeItem(`custom_piece_model_${t}`);
-  });
+  localStorage.clear();
 }
 
 export function createWoodMaterials() {
