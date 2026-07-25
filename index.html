@@ -230,7 +230,6 @@
       gap: 0.5rem;
     }
 
-    /* Loading Spinner */
     .ai-thinking {
       display: none;
       align-items: center;
@@ -356,11 +355,11 @@
     let moveMarkers = [];
     let raycaster, mouse;
 
-    // Material definitions inspired by ceramic reference image
-    const matLightSquare = new THREE.MeshStandardMaterial({ color: 0xedd6b1, roughness: 0.35 });
-    const matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.4 });
-    const matFrame = new THREE.MeshStandardMaterial({ color: 0x1f140e, roughness: 0.2, metalness: 0.1 });
-    const matFrameGold = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.8 });
+    // High contrast materials for crisp checkerboard grid
+    const matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf0d9b5, roughness: 0.3 }); // Light Maple
+    const matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x8a5a36, roughness: 0.35 });  // Dark Walnut
+    const matFrame = new THREE.MeshStandardMaterial({ color: 0x1a120b, roughness: 0.35 });
+    const matFrameGold = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.75 });
 
     // Porcelain Ceramic White/Ivory
     const matWhitePiece = new THREE.MeshStandardMaterial({
@@ -369,7 +368,7 @@
       metalness: 0.1
     });
 
-    // Ornate Cobalt Blue Ceramic (Matching reference image)
+    // Ornate Cobalt Blue Ceramic
     const matBlackPiece = new THREE.MeshStandardMaterial({
       color: 0x1b3b6f,
       roughness: 0.2,
@@ -403,10 +402,10 @@
       controls.maxDistance = 18;
 
       // Lights
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
       scene.add(ambientLight);
 
-      const dirLight = new THREE.DirectionalLight(0xfff5ea, 1.2);
+      const dirLight = new THREE.DirectionalLight(0xfff5ea, 1.25);
       dirLight.position.set(6, 12, 8);
       dirLight.castShadow = true;
       dirLight.shadow.mapSize.width = 2048;
@@ -414,7 +413,7 @@
       dirLight.shadow.bias = -0.0005;
       scene.add(dirLight);
 
-      const fillLight = new THREE.DirectionalLight(0x80b3ff, 0.4);
+      const fillLight = new THREE.DirectionalLight(0x80b3ff, 0.45);
       fillLight.position.set(-6, 8, -6);
       scene.add(fillLight);
 
@@ -431,20 +430,20 @@
 
     // --- 3. PROCEDURAL 3D CERAMIC BOARD & PIECES ---
     function buildBoard3D() {
-      // Outer Wood Slab
+      // Outer Wood Frame (positioned below y = 0 to prevent Z-fighting)
       const frameGeo = new THREE.BoxGeometry(9.6, 0.4, 9.6);
       const frameMesh = new THREE.Mesh(frameGeo, matFrame);
-      frameMesh.position.y = -0.21;
+      frameMesh.position.y = -0.22;
       frameMesh.receiveShadow = true;
       scene.add(frameMesh);
 
-      // Gold Trim Inlay
-      const trimGeo = new THREE.BoxGeometry(8.9, 0.42, 8.9);
+      // Gold Trim Border (positioned below y = 0)
+      const trimGeo = new THREE.BoxGeometry(8.5, 0.38, 8.5);
       const trimMesh = new THREE.Mesh(trimGeo, matFrameGold);
-      trimMesh.position.y = -0.21;
+      trimMesh.position.y = -0.20;
       scene.add(trimMesh);
 
-      // 8x8 Board Grid
+      // 8x8 Board Grid (positioned at y = 0, top surface at y = 0.10)
       squareMeshes = [];
       for (let r = 0; r < 8; r++) {
         squareMeshes[r] = [];
@@ -452,7 +451,7 @@
           const isLight = (r + c) % 2 === 0;
           const sqGeo = new THREE.BoxGeometry(1, 0.2, 1);
           const sqMesh = new THREE.Mesh(sqGeo, isLight ? matLightSquare : matDarkSquare);
-          sqMesh.position.set(c - 3.5, -0.1, r - 3.5);
+          sqMesh.position.set(c - 3.5, 0.0, r - 3.5);
           sqMesh.receiveShadow = true;
           sqMesh.userData = { row: r, col: c };
           scene.add(sqMesh);
@@ -461,7 +460,6 @@
       }
     }
 
-    // Procedural Lathe geometries for elegant ceramic piece profiles
     function createPieceMesh(type) {
       const isWhite = type === type.toUpperCase();
       const pieceMat = isWhite ? matWhitePiece : matBlackPiece;
@@ -471,7 +469,6 @@
       const lowerType = type.toLowerCase();
 
       let points = [];
-      let height = 1.0;
 
       if (lowerType === 'p') {
         points = [
@@ -484,7 +481,6 @@
           new THREE.Vector2(0.18, 0.55),
           new THREE.Vector2(0, 0.8)
         ];
-        height = 0.8;
       } else if (lowerType === 'r') {
         points = [
           new THREE.Vector2(0, 0),
@@ -495,9 +491,7 @@
           new THREE.Vector2(0.32, 0.95),
           new THREE.Vector2(0, 0.95)
         ];
-        height = 0.95;
       } else if (lowerType === 'n') {
-        // Base stem + Knight Horse head
         points = [
           new THREE.Vector2(0, 0),
           new THREE.Vector2(0.36, 0.06),
@@ -506,7 +500,6 @@
           new THREE.Vector2(0.24, 0.52),
           new THREE.Vector2(0, 0.55)
         ];
-        height = 1.05;
       } else if (lowerType === 'b') {
         points = [
           new THREE.Vector2(0, 0),
@@ -518,7 +511,6 @@
           new THREE.Vector2(0.06, 1.08),
           new THREE.Vector2(0, 1.15)
         ];
-        height = 1.15;
       } else if (lowerType === 'q') {
         points = [
           new THREE.Vector2(0, 0),
@@ -530,7 +522,6 @@
           new THREE.Vector2(0.08, 1.3),
           new THREE.Vector2(0, 1.35)
         ];
-        height = 1.35;
       } else if (lowerType === 'k') {
         points = [
           new THREE.Vector2(0, 0),
@@ -541,7 +532,6 @@
           new THREE.Vector2(0.28, 1.3),
           new THREE.Vector2(0, 1.35)
         ];
-        height = 1.45;
       }
 
       const latheGeo = new THREE.LatheGeometry(points, 24);
@@ -557,9 +547,8 @@
       ringMesh.position.y = points[2].y;
       group.add(ringMesh);
 
-      // Unique Head Top Details
+      // Head Top Details
       if (lowerType === 'k') {
-        // King Cross
         const crossH = new THREE.BoxGeometry(0.22, 0.06, 0.06);
         const crossV = new THREE.BoxGeometry(0.06, 0.22, 0.06);
         const c1 = new THREE.Mesh(crossH, accentMat);
@@ -569,7 +558,6 @@
         group.add(c1);
         group.add(c2);
       } else if (lowerType === 'n') {
-        // Knight Head Sculpt
         const headGeo = new THREE.BoxGeometry(0.24, 0.45, 0.38);
         const headMesh = new THREE.Mesh(headGeo, pieceMat);
         headMesh.position.set(0, 0.72, 0.06);
@@ -577,7 +565,6 @@
         headMesh.castShadow = true;
         group.add(headMesh);
       } else if (lowerType === 'r') {
-        // Rook Castle Battlements
         const crownGeo = new THREE.CylinderGeometry(0.33, 0.3, 0.2, 8);
         const crownMesh = new THREE.Mesh(crownGeo, pieceMat);
         crownMesh.position.y = 1.0;
@@ -591,16 +578,15 @@
 
     function createSelectionHighlights() {
       // Selected Square Ring
-      const ringGeo = new THREE.RingGeometry(0.35, 0.45, 32);
+      const ringGeo = new THREE.RingGeometry(0.35, 0.46, 32);
       highlightRing = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide }));
       highlightRing.rotation.x = Math.PI / 2;
-      highlightRing.position.y = 0.01;
+      highlightRing.position.y = 0.105;
       highlightRing.visible = false;
       scene.add(highlightRing);
     }
 
     function update3DPieces() {
-      // Clear existing piece meshes
       pieceMeshes.forEach(p => scene.remove(p.mesh));
       pieceMeshes = [];
 
@@ -609,9 +595,9 @@
           const type = boardState[r][c];
           if (type) {
             const mesh = createPieceMesh(type);
-            mesh.position.set(c - 3.5, 0, r - 3.5);
+            mesh.position.set(c - 3.5, 0.1, r - 3.5);
             if (type === type.toLowerCase()) {
-              mesh.rotation.y = Math.PI; // Black faces forward
+              mesh.rotation.y = Math.PI;
             }
             scene.add(mesh);
             pieceMeshes.push({ mesh, row: r, col: c, type });
@@ -621,24 +607,23 @@
     }
 
     function renderValidMoveMarkers() {
-      // Clear old markers
       moveMarkers.forEach(m => scene.remove(m));
       moveMarkers = [];
 
       validMoves.forEach(m => {
         const hasEnemy = boardState[m.r][m.c] !== '';
         const markerGeo = hasEnemy 
-          ? new THREE.RingGeometry(0.35, 0.45, 24)
+          ? new THREE.RingGeometry(0.35, 0.46, 24)
           : new THREE.CircleGeometry(0.18, 24);
         const markerMat = new THREE.MeshBasicMaterial({
           color: hasEnemy ? 0xef4444 : 0x10b981,
           side: THREE.DoubleSide,
           transparent: true,
-          opacity: 0.8
+          opacity: 0.85
         });
         const markerMesh = new THREE.Mesh(markerGeo, markerMat);
         markerMesh.rotation.x = Math.PI / 2;
-        markerMesh.position.set(m.c - 3.5, 0.02, m.r - 3.5);
+        markerMesh.position.set(m.c - 3.5, 0.106, m.r - 3.5);
         scene.add(markerMesh);
         moveMarkers.push(markerMesh);
       });
@@ -732,7 +717,6 @@
       boardState[toR][toC] = piece;
       boardState[fromR][fromC] = '';
 
-      // Move log notation
       const files = ['a','b','c','d','e','f','g','h'];
       const pieceSym = piece.toUpperCase() === 'P' ? '' : piece.toUpperCase();
       const capSym = target ? 'x' : '';
@@ -747,7 +731,6 @@
       renderValidMoveMarkers();
       updateHUD();
 
-      // Trigger AI turn if applicable
       if (!isGameOver && gameMode !== 'pvp' && currentTurn !== userSide) {
         setTimeout(triggerAIMove, 500);
       }
@@ -777,7 +760,6 @@
         for (let c = 0; c < 8; c++) {
           const piece = board[r][c];
           if (piece && getPieceColor(piece) === color) {
-            // Save state to fetch moves
             const origTurn = currentTurn;
             currentTurn = color;
             const moves = getValidMoves(r, c);
@@ -852,7 +834,6 @@
           const depth = gameMode === 'ai-hard' ? 3 : 2;
           let bestVal = isMaximizing ? -Infinity : Infinity;
 
-          // Shuffle moves for variety
           moves.sort(() => Math.random() - 0.5);
 
           for (let m of moves) {
@@ -912,7 +893,7 @@
       if (clickedColor === currentTurn) {
         selectedSquare = { r, c };
         validMoves = getValidMoves(r, c);
-        highlightRing.position.set(c - 3.5, 0.01, r - 3.5);
+        highlightRing.position.set(c - 3.5, 0.105, r - 3.5);
         highlightRing.visible = true;
         renderValidMoveMarkers();
         return;
