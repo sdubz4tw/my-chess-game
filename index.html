@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity 3D Chess - Staunton Wood Edition</title>
+  <title>Antigravity 3D Chess - Wikimedia Staunton Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -101,6 +101,12 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
+    }
+
+    .brand img {
+      width: 32px;
+      height: 32px;
+      vertical-align: middle;
     }
 
     .brand h1 {
@@ -247,21 +253,31 @@
       padding: 0.25rem 0.5rem;
       border-radius: 6px;
       color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
     }
 
     .captured-tray {
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
-      font-size: 1.1rem;
-      min-height: 40px;
+      min-height: 44px;
     }
 
     .captured-row {
       display: flex;
       align-items: center;
-      gap: 0.2rem;
-      min-height: 20px;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      min-height: 22px;
+    }
+
+    .captured-row img {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
     }
 
     .camera-tools {
@@ -338,26 +354,35 @@
       border-radius: 12px;
       padding: 1rem 0.5rem;
       color: #292524;
-      font-size: 2.2rem;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.5rem;
+    }
+
+    .promo-btn img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
     }
 
     .promo-btn span {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-family: inherit;
-      color: var(--text-muted);
+      font-weight: 600;
+      color: var(--text-main);
     }
 
     .promo-btn:hover {
       background: var(--accent);
-      color: #ffffff;
       border-color: var(--accent);
       transform: translateY(-3px);
+    }
+
+    .promo-btn:hover span {
+      color: #ffffff;
     }
 
     .game-over-banner {
@@ -383,13 +408,13 @@
   <div class="hud">
     <div class="hud-header">
       <div class="brand">
-        <span style="font-size: 1.6rem;">♟️</span>
-        <h1>Staunton Chess</h1>
+        <img id="brandIcon" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" alt="Knight Icon">
+        <h1>Wikimedia Staunton Chess</h1>
       </div>
 
       <div class="controls-top">
         <select id="boardTheme" class="select-input" onchange="changeTheme()">
-          <option value="vintage" selected>Natural Boxwood & Rosewood (Image)</option>
+          <option value="vintage" selected>Natural Staunton Wood (Image)</option>
           <option value="porcelain">Cobalt Porcelain (Blue)</option>
           <option value="cyber">Midnight Cyber (Dark)</option>
         </select>
@@ -446,10 +471,22 @@
       <h2>Pawn Promotion</h2>
       <p>Select piece to replace promoted pawn:</p>
       <div class="promo-options">
-        <button class="promo-btn" onclick="selectPromotionChoice('Q')">♛ <span>Queen</span></button>
-        <button class="promo-btn" onclick="selectPromotionChoice('R')">♜ <span>Rook</span></button>
-        <button class="promo-btn" onclick="selectPromotionChoice('B')">♝ <span>Bishop</span></button>
-        <button class="promo-btn" onclick="selectPromotionChoice('N')">♞ <span>Knight</span></button>
+        <button class="promo-btn" onclick="selectPromotionChoice('Q')">
+          <img id="promoImgQ" src="https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg" alt="Queen">
+          <span>Queen</span>
+        </button>
+        <button class="promo-btn" onclick="selectPromotionChoice('R')">
+          <img id="promoImgR" src="https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg" alt="Rook">
+          <span>Rook</span>
+        </button>
+        <button class="promo-btn" onclick="selectPromotionChoice('B')">
+          <img id="promoImgB" src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg" alt="Bishop">
+          <span>Bishop</span>
+        </button>
+        <button class="promo-btn" onclick="selectPromotionChoice('N')">
+          <img id="promoImgN" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" alt="Knight">
+          <span>Knight</span>
+        </button>
       </div>
     </div>
   </div>
@@ -464,10 +501,21 @@
   </div>
 
   <script>
-    // --- 1. CHESS LOGIC & STATE ---
-    const PIECES_UNICODE = {
-      'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙',
-      'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟'
+    // --- 1. WIKIMEDIA CHESS PIECE SVG URLS (NO TEXT SYMBOLS) ---
+    const PIECES_SVG = {
+      'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+      'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+      'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+      'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+      'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+      'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
+
+      'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
+      'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+      'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+      'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+      'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+      'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
     };
 
     const INITIAL_BOARD = [
@@ -511,14 +559,23 @@
     let checkRing = null;
     let moveMarkers = [];
     let raycaster, mouse;
+    const textureCache = {};
 
-    // THEME MATERIALS (Matching attached Staunton Boxwood & Rosewood reference image)
+    // THEME MATERIALS
     let matLightSquare, matDarkSquare, matFrame, matFrameGold;
     let matWhitePiece, matBlackPiece, matWhiteAccent, matBlackAccent;
     let matFeltBase;
 
+    function preloadSVGTextures() {
+      const loader = new THREE.TextureLoader();
+      Object.keys(PIECES_SVG).forEach(type => {
+        textureCache[type] = loader.load(PIECES_SVG[type]);
+      });
+    }
+    preloadSVGTextures();
+
     function applyThemeMaterials(themeName) {
-      matFeltBase = new THREE.MeshStandardMaterial({ color: 0x1b4d2e, roughness: 0.8 }); // Green Felt Base Pad
+      matFeltBase = new THREE.MeshStandardMaterial({ color: 0x1b4d2e, roughness: 0.8 });
 
       if (themeName === 'porcelain') {
         matLightSquare = new THREE.MeshStandardMaterial({ color: 0xedd6b1, roughness: 0.35 });
@@ -541,26 +598,14 @@
         matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.2, metalness: 0.9 });
         if (scene) scene.background = new THREE.Color(0x020617);
       } else {
-        // 'vintage' - Authentic Staunton Natural Boxwood & Stained Rosewood (Matching exact reference image)
-        matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf2e6ce, roughness: 0.35 }); // Natural Light Maple
-        matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.4 });  // Rich Walnut
-        matFrame = new THREE.MeshStandardMaterial({ color: 0x4a301c, roughness: 0.35 });      // Oak Frame
+        // 'vintage' - Authentic Staunton Boxwood & Stained Rosewood
+        matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf2e6ce, roughness: 0.35 });
+        matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.4 });
+        matFrame = new THREE.MeshStandardMaterial({ color: 0x4a301c, roughness: 0.35 });
         matFrameGold = new THREE.MeshStandardMaterial({ color: 0xc69214, roughness: 0.3, metalness: 0.7 });
 
-        // White Set: Natural Boxwood Light Maple (Matching top row in image)
-        matWhitePiece = new THREE.MeshStandardMaterial({
-          color: 0xe8d5b5,
-          roughness: 0.32,
-          metalness: 0.04
-        });
-
-        // Black Set: Stained Dark Rosewood / Mahogany (Matching bottom row in image)
-        matBlackPiece = new THREE.MeshStandardMaterial({
-          color: 0x5a301c,
-          roughness: 0.35,
-          metalness: 0.08
-        });
-
+        matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xe8d5b5, roughness: 0.32, metalness: 0.04 });
+        matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x5a301c, roughness: 0.35, metalness: 0.08 });
         matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.6 });
         matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x3d2012, roughness: 0.3, metalness: 0.2 });
         if (scene) scene.background = new THREE.Color(0xdcd0bc);
@@ -653,7 +698,7 @@
       scene.add(boardGroup);
     }
 
-    // Exact Staunton piece profiles matching the reference image
+    // High-quality Staunton piece Mesh with double-sided SVG texture standee + Green Felt Pad
     function createPieceMesh(type) {
       const isWhite = type === type.toUpperCase();
       const pieceMat = isWhite ? matWhitePiece : matBlackPiece;
@@ -662,132 +707,50 @@
       const group = new THREE.Group();
       const lowerType = type.toLowerCase();
 
-      let points = [];
-
-      if (lowerType === 'p') { // Pawn
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.35, 0.05),
-          new THREE.Vector2(0.30, 0.12),
-          new THREE.Vector2(0.18, 0.35),
-          new THREE.Vector2(0.15, 0.48),
-          new THREE.Vector2(0.22, 0.52),
-          new THREE.Vector2(0.18, 0.56),
-          new THREE.Vector2(0, 0.85)
-        ];
-      } else if (lowerType === 'r') { // Rook
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.38, 0.06),
-          new THREE.Vector2(0.32, 0.15),
-          new THREE.Vector2(0.24, 0.65),
-          new THREE.Vector2(0.33, 0.76),
-          new THREE.Vector2(0.33, 0.98),
-          new THREE.Vector2(0, 0.98)
-        ];
-      } else if (lowerType === 'n') { // Knight
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.38, 0.06),
-          new THREE.Vector2(0.32, 0.15),
-          new THREE.Vector2(0.22, 0.45),
-          new THREE.Vector2(0.26, 0.52),
-          new THREE.Vector2(0, 0.55)
-        ];
-      } else if (lowerType === 'b') { // Bishop
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.38, 0.06),
-          new THREE.Vector2(0.32, 0.15),
-          new THREE.Vector2(0.19, 0.65),
-          new THREE.Vector2(0.28, 0.75),
-          new THREE.Vector2(0.22, 0.96),
-          new THREE.Vector2(0.08, 1.10),
-          new THREE.Vector2(0, 1.18)
-        ];
-      } else if (lowerType === 'q') { // Queen
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.40, 0.06),
-          new THREE.Vector2(0.34, 0.15),
-          new THREE.Vector2(0.21, 0.75),
-          new THREE.Vector2(0.35, 0.96),
-          new THREE.Vector2(0.31, 1.25),
-          new THREE.Vector2(0.08, 1.32),
-          new THREE.Vector2(0, 1.38)
-        ];
-      } else if (lowerType === 'k') { // King
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.42, 0.06),
-          new THREE.Vector2(0.35, 0.15),
-          new THREE.Vector2(0.23, 0.8),
-          new THREE.Vector2(0.36, 1.05),
-          new THREE.Vector2(0.30, 1.32),
-          new THREE.Vector2(0, 1.38)
-        ];
-      }
-
-      // 1. Green Felt Base Pad (Exact Staunton detail from reference image)
-      const feltGeo = new THREE.CylinderGeometry(points[1].x * 0.98, points[1].x * 0.98, 0.04, 24);
+      // 1. Green Felt Base Pad (Exact Staunton detail)
+      const feltGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.04, 24);
       const feltMesh = new THREE.Mesh(feltGeo, matFeltBase);
       feltMesh.position.y = -0.02;
       group.add(feltMesh);
 
-      // 2. Main Lathe Body
-      const latheGeo = new THREE.LatheGeometry(points, 24);
-      const mainMesh = new THREE.Mesh(latheGeo, pieceMat);
-      mainMesh.castShadow = true;
-      mainMesh.receiveShadow = true;
-      group.add(mainMesh);
+      // 2. Base Pedestal Ring
+      const baseGeo = new THREE.CylinderGeometry(0.38, 0.42, 0.12, 24);
+      const baseMesh = new THREE.Mesh(baseGeo, pieceMat);
+      baseMesh.position.y = 0.06;
+      baseMesh.castShadow = true;
+      baseMesh.receiveShadow = true;
+      group.add(baseMesh);
 
-      // 3. Waist Collar Accent Ring
-      const ringGeo = new THREE.TorusGeometry(points[2].x * 0.9, 0.025, 12, 24);
+      const ringGeo = new THREE.TorusGeometry(0.36, 0.025, 12, 24);
       const ringMesh = new THREE.Mesh(ringGeo, accentMat);
       ringMesh.rotation.x = Math.PI / 2;
-      ringMesh.position.y = points[2].y;
+      ringMesh.position.y = 0.12;
       group.add(ringMesh);
 
-      // 4. Detailed Finials & Head Shapes (Matching image)
-      if (lowerType === 'k') { // King Formée Cross Finial
-        const crossH = new THREE.BoxGeometry(0.24, 0.07, 0.07);
-        const crossV = new THREE.BoxGeometry(0.07, 0.24, 0.07);
-        const c1 = new THREE.Mesh(crossH, pieceMat);
-        const c2 = new THREE.Mesh(crossV, pieceMat);
-        c1.position.y = 1.48;
-        c2.position.y = 1.48;
-        c1.castShadow = true;
-        c2.castShadow = true;
-        group.add(c1);
-        group.add(c2);
-      } else if (lowerType === 'q') { // Queen Coronet Ball Finial
-        const ballGeo = new THREE.SphereGeometry(0.09, 16, 16);
-        const ballMesh = new THREE.Mesh(ballGeo, pieceMat);
-        ballMesh.position.y = 1.42;
-        ballMesh.castShadow = true;
-        group.add(ballMesh);
-      } else if (lowerType === 'b') { // Bishop Slit & Finial Ball
-        const ballGeo = new THREE.SphereGeometry(0.075, 16, 16);
-        const ballMesh = new THREE.Mesh(ballGeo, pieceMat);
-        ballMesh.position.y = 1.22;
-        ballMesh.castShadow = true;
-        group.add(ballMesh);
-      } else if (lowerType === 'n') { // Knight Horse Head Sculpt
-        const headGeo = new THREE.BoxGeometry(0.24, 0.46, 0.38);
-        const headMesh = new THREE.Mesh(headGeo, pieceMat);
-        headMesh.position.set(0, 0.72, 0.06);
-        headMesh.rotation.x = 0.2;
-        headMesh.castShadow = true;
-        group.add(headMesh);
-      } else if (lowerType === 'r') { // Rook Castle Battlements
-        const crownGeo = new THREE.CylinderGeometry(0.34, 0.31, 0.22, 8);
-        const crownMesh = new THREE.Mesh(crownGeo, pieceMat);
-        crownMesh.position.y = 1.02;
-        crownMesh.castShadow = true;
-        group.add(crownMesh);
-      }
+      // 3. High-Quality Wikimedia SVG Vector Face Standee
+      const tex = textureCache[type] || new THREE.TextureLoader().load(PIECES_SVG[type]);
+      const spriteMat = new THREE.MeshStandardMaterial({
+        map: tex,
+        transparent: true,
+        alphaTest: 0.1,
+        side: THREE.DoubleSide,
+        roughness: 0.3
+      });
 
-      group.scale.set(0.9, 0.9, 0.9);
+      let heightScale = 0.85;
+      if (lowerType === 'k') heightScale = 1.15;
+      else if (lowerType === 'q') heightScale = 1.10;
+      else if (lowerType === 'r') heightScale = 0.90;
+      else if (lowerType === 'b') heightScale = 1.0;
+      else if (lowerType === 'n') heightScale = 0.95;
+
+      const planeGeo = new THREE.PlaneGeometry(heightScale, heightScale);
+      const spriteMesh = new THREE.Mesh(planeGeo, spriteMat);
+      spriteMesh.position.y = 0.12 + (heightScale / 2);
+      spriteMesh.castShadow = true;
+      group.add(spriteMesh);
+
+      group.userData = { spriteMesh };
       return group;
     }
 
@@ -817,9 +780,6 @@
           if (type) {
             const mesh = createPieceMesh(type);
             mesh.position.set(c - 3.5, 0.1, r - 3.5);
-            if (type === type.toLowerCase()) {
-              mesh.rotation.y = Math.PI;
-            }
             scene.add(mesh);
             pieceMeshes.push({ mesh, row: r, col: c, type });
           }
@@ -1044,6 +1004,14 @@
       if (piece.toLowerCase() === 'p' && (toR === 0 || toR === 7) && !promotionChoice) {
         if (currentTurn === userSide || gameMode === 'pvp') {
           pendingPromotion = { fromR, fromC, toR, toC };
+
+          const prefix = isWhite ? 'w' : 'b';
+          const pColor = isWhite ? 'l' : 'd';
+          document.getElementById('promoImgQ').src = PIECES_SVG[isWhite ? 'Q' : 'q'];
+          document.getElementById('promoImgR').src = PIECES_SVG[isWhite ? 'R' : 'r'];
+          document.getElementById('promoImgB').src = PIECES_SVG[isWhite ? 'B' : 'b'];
+          document.getElementById('promoImgN').src = PIECES_SVG[isWhite ? 'N' : 'n'];
+
           document.getElementById('promotionModal').style.display = 'flex';
           return;
         } else {
@@ -1070,17 +1038,18 @@
         if (toC === 6) {
           boardState[fromR][5] = boardState[fromR][7];
           boardState[fromR][7] = '';
-          moveHistory.push('O-O');
+          moveHistory.push({ notation: 'O-O', piece });
         } else if (toC === 2) {
           boardState[fromR][3] = boardState[fromR][0];
           boardState[fromR][0] = '';
-          moveHistory.push('O-O-O');
+          moveHistory.push({ notation: 'O-O-O', piece });
         }
       } else {
         const files = ['a','b','c','d','e','f','g','h'];
         const pieceSym = piece.toUpperCase() === 'P' ? '' : piece.toUpperCase();
         const capSym = (target || isEP) ? 'x' : '';
-        moveHistory.push(`${pieceSym}${files[fromC]}${8-fromR}${capSym}${files[toC]}${8-toR}`);
+        const notation = `${pieceSym}${files[fromC]}${8-fromR}${capSym}${files[toC]}${8-toR}`;
+        moveHistory.push({ notation, piece });
       }
 
       boardState[toR][toC] = promotionChoice ? (isWhite ? promotionChoice.toUpperCase() : promotionChoice.toLowerCase()) : piece;
@@ -1374,18 +1343,29 @@
       turnText.textContent = `${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}'s Turn`;
       badge.className = `turn-badge ${currentTurn}`;
 
-      document.getElementById('capturedWhite').textContent = capturedWhite.map(p => PIECES_UNICODE[p]).join(' ');
-      document.getElementById('capturedBlack').textContent = capturedBlack.map(p => PIECES_UNICODE[p]).join(' ');
+      // Captured Pieces rendered as SVG Images (NO text symbols)
+      document.getElementById('capturedWhite').innerHTML = capturedWhite.map(p => 
+        `<img src="${PIECES_SVG[p]}" alt="${p}">`
+      ).join('');
+      
+      document.getElementById('capturedBlack').innerHTML = capturedBlack.map(p => 
+        `<img src="${PIECES_SVG[p]}" alt="${p}">`
+      ).join('');
 
+      // Move Log with piece SVG icons
       const moveLogEl = document.getElementById('moveLog');
       moveLogEl.innerHTML = '';
       for (let i = 0; i < moveHistory.length; i += 2) {
         const moveNum = Math.floor(i / 2) + 1;
-        const wMove = moveHistory[i] || '';
-        const bMove = moveHistory[i + 1] || '';
+        const wMove = moveHistory[i];
+        const bMove = moveHistory[i + 1];
+
+        const wIcon = wMove ? `<img src="${PIECES_SVG[wMove.piece]}" width="16" height="16" style="vertical-align:middle;">` : '';
+        const bIcon = bMove ? `<img src="${PIECES_SVG[bMove.piece]}" width="16" height="16" style="vertical-align:middle;">` : '';
+        
         const div = document.createElement('div');
         div.className = 'move-item';
-        div.textContent = `${moveNum}. ${wMove} ${bMove}`;
+        div.innerHTML = `${moveNum}. ${wIcon} ${wMove ? wMove.notation : ''} ${bIcon} ${bMove ? bMove.notation : ''}`;
         moveLogEl.appendChild(div);
       }
       moveLogEl.scrollTop = moveLogEl.scrollHeight;
@@ -1428,6 +1408,14 @@
 
     function animate() {
       requestAnimationFrame(animate);
+
+      // Smooth camera billboarding for 3D piece standees
+      pieceMeshes.forEach(p => {
+        if (p.mesh.userData && p.mesh.userData.spriteMesh) {
+          p.mesh.userData.spriteMesh.rotation.y = camera.rotation.y;
+        }
+      });
+
       controls.update();
       renderer.render(scene, camera);
     }
