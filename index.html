@@ -336,45 +336,42 @@
     ];
 
     let boardState = [];
-    let currentTurn = 'white'; // 'white' | 'black'
+    let currentTurn = 'white';
     let selectedSquare = null;
     let validMoves = [];
     let moveHistory = [];
     let capturedWhite = [];
     let capturedBlack = [];
 
-    let gameMode = 'ai-medium'; // 'ai-easy' | 'ai-medium' | 'ai-hard' | 'pvp'
-    let userSide = 'white'; // 'white' | 'black'
+    // Castling state tracking flags
+    let hasMoved = {
+      whiteKing: false,
+      blackKing: false,
+      whiteRookK: false,
+      whiteRookQ: false,
+      blackRookK: false,
+      blackRookQ: false
+    };
+
+    let gameMode = 'ai-medium';
+    let userSide = 'white';
     let isGameOver = false;
 
     // --- 2. THREE.JS SCENE SETUP ---
     let scene, camera, renderer, controls;
-    let squareMeshes = []; // 8x8 array
-    let pieceMeshes = [];  // array of objects { mesh, row, col, type }
+    let squareMeshes = [];
+    let pieceMeshes = [];
     let highlightRing = null;
     let moveMarkers = [];
     let raycaster, mouse;
 
-    // High contrast materials for crisp checkerboard grid
-    const matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf0d9b5, roughness: 0.3 }); // Light Maple
-    const matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x8a5a36, roughness: 0.35 });  // Dark Walnut
+    const matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf0d9b5, roughness: 0.3 });
+    const matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x8a5a36, roughness: 0.35 });
     const matFrame = new THREE.MeshStandardMaterial({ color: 0x1a120b, roughness: 0.35 });
     const matFrameGold = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.75 });
 
-    // Porcelain Ceramic White/Ivory
-    const matWhitePiece = new THREE.MeshStandardMaterial({
-      color: 0xfaf7f2,
-      roughness: 0.18,
-      metalness: 0.1
-    });
-
-    // Ornate Cobalt Blue Ceramic
-    const matBlackPiece = new THREE.MeshStandardMaterial({
-      color: 0x1b3b6f,
-      roughness: 0.2,
-      metalness: 0.25
-    });
-
+    const matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xfaf7f2, roughness: 0.18, metalness: 0.1 });
+    const matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x1b3b6f, roughness: 0.2, metalness: 0.25 });
     const matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.7 });
     const matBlackAccent = new THREE.MeshStandardMaterial({ color: 0xc8963e, roughness: 0.3, metalness: 0.7 });
 
@@ -401,7 +398,6 @@
       controls.minDistance = 5;
       controls.maxDistance = 18;
 
-      // Lights
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
       scene.add(ambientLight);
 
@@ -417,7 +413,6 @@
       fillLight.position.set(-6, 8, -6);
       scene.add(fillLight);
 
-      // Raycaster
       raycaster = new THREE.Raycaster();
       mouse = new THREE.Vector2();
 
@@ -428,22 +423,18 @@
       renderer.domElement.addEventListener('pointerdown', onPointerDown);
     }
 
-    // --- 3. PROCEDURAL 3D CERAMIC BOARD & PIECES ---
     function buildBoard3D() {
-      // Outer Wood Frame (positioned below y = 0 to prevent Z-fighting)
       const frameGeo = new THREE.BoxGeometry(9.6, 0.4, 9.6);
       const frameMesh = new THREE.Mesh(frameGeo, matFrame);
       frameMesh.position.y = -0.22;
       frameMesh.receiveShadow = true;
       scene.add(frameMesh);
 
-      // Gold Trim Border (positioned below y = 0)
       const trimGeo = new THREE.BoxGeometry(8.5, 0.38, 8.5);
       const trimMesh = new THREE.Mesh(trimGeo, matFrameGold);
       trimMesh.position.y = -0.20;
       scene.add(trimMesh);
 
-      // 8x8 Board Grid (positioned at y = 0, top surface at y = 0.10)
       squareMeshes = [];
       for (let r = 0; r < 8; r++) {
         squareMeshes[r] = [];
@@ -540,14 +531,12 @@
       mainMesh.receiveShadow = true;
       group.add(mainMesh);
 
-      // Ornate Accent Collar Ring
       const ringGeo = new THREE.TorusGeometry(points[2].x * 0.9, 0.03, 12, 24);
       const ringMesh = new THREE.Mesh(ringGeo, accentMat);
       ringMesh.rotation.x = Math.PI / 2;
       ringMesh.position.y = points[2].y;
       group.add(ringMesh);
 
-      // Head Top Details
       if (lowerType === 'k') {
         const crossH = new THREE.BoxGeometry(0.22, 0.06, 0.06);
         const crossV = new THREE.BoxGeometry(0.06, 0.22, 0.06);
@@ -577,7 +566,6 @@
     }
 
     function createSelectionHighlights() {
-      // Selected Square Ring
       const ringGeo = new THREE.RingGeometry(0.35, 0.46, 32);
       highlightRing = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide }));
       highlightRing.rotation.x = Math.PI / 2;
@@ -612,11 +600,11 @@
 
       validMoves.forEach(m => {
         const hasEnemy = boardState[m.r][m.c] !== '';
-        const markerGeo = hasEnemy 
+        const markerGeo = (hasEnemy || m.isCastling)
           ? new THREE.RingGeometry(0.35, 0.46, 24)
           : new THREE.CircleGeometry(0.18, 24);
         const markerMat = new THREE.MeshBasicMaterial({
-          color: hasEnemy ? 0xef4444 : 0x10b981,
+          color: m.isCastling ? 0x3b82f6 : (hasEnemy ? 0xef4444 : 0x10b981),
           side: THREE.DoubleSide,
           transparent: true,
           opacity: 0.85
@@ -640,6 +628,12 @@
       capturedBlack = [];
       isGameOver = false;
 
+      hasMoved = {
+        whiteKing: false, blackKing: false,
+        whiteRookK: false, whiteRookQ: false,
+        blackRookK: false, blackRookQ: false
+      };
+
       update3DPieces();
       updateHUD();
       if (highlightRing) highlightRing.visible = false;
@@ -653,6 +647,57 @@
     function isWhitePiece(p) { return p && p === p.toUpperCase(); }
     function isBlackPiece(p) { return p && p === p.toLowerCase(); }
     function getPieceColor(p) { return isWhitePiece(p) ? 'white' : 'black'; }
+
+    // Check if square (r, c) is under attack by opponent of 'friendlyColor'
+    function isSquareAttacked(targetR, targetC, friendlyColor) {
+      const oppColor = friendlyColor === 'white' ? 'black' : 'white';
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const piece = boardState[r][c];
+          if (piece && getPieceColor(piece) === oppColor) {
+            const moves = getBasicPieceMoves(r, c, boardState);
+            if (moves.some(m => m.r === targetR && m.c === targetC)) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function getBasicPieceMoves(r, c, board) {
+      const piece = board[r][c];
+      if (!piece) return [];
+      const color = getPieceColor(piece);
+      const moves = [];
+      const type = piece.toLowerCase();
+
+      const addMove = (nr, nc) => {
+        if (nr < 0 || nr > 7 || nc < 0 || nc > 7) return false;
+        const target = board[nr][nc];
+        if (!target) { moves.push({ r: nr, c: nc }); return true; }
+        if (getPieceColor(target) !== color) { moves.push({ r: nr, c: nc }); }
+        return false;
+      };
+
+      if (type === 'p') {
+        const dir = color === 'white' ? -1 : 1;
+        [-1, 1].forEach(dc => {
+          const nr = r + dir, nc = c + dc;
+          if (nr >= 0 && nr <= 7 && nc >= 0 && nc <= 7) moves.push({ r: nr, c: nc });
+        });
+      } else if (type === 'n') {
+        [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc]) => addMove(r+dr, c+dc));
+      } else if (type === 'k') {
+        for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++) if(dr||dc) addMove(r+dr, c+dc);
+      } else {
+        const dirs = (type === 'r' || type === 'q') ? [[-1,0],[1,0],[0,-1],[0,1]] : [];
+        if (type === 'b' || type === 'q') dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
+        dirs.forEach(([dr,dc]) => {
+          let nr = r+dr, nc = c+dc;
+          while(addMove(nr,nc)) { nr += dr; nc += dc; }
+        });
+      }
+      return moves;
+    }
 
     function getValidMoves(r, c) {
       const piece = boardState[r][c];
@@ -693,6 +738,33 @@
         [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc]) => addMove(r+dr, c+dc));
       } else if (type === 'k') {
         for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++) if(dr||dc) addMove(r+dr, c+dc);
+
+        // --- CASTLING RULES ---
+        const isWhite = color === 'white';
+        const kingMoved = isWhite ? hasMoved.whiteKing : hasMoved.blackKing;
+        const rookKMoved = isWhite ? hasMoved.whiteRookK : hasMoved.blackRookK;
+        const rookQMoved = isWhite ? hasMoved.whiteRookQ : hasMoved.blackRookQ;
+        const kr = isWhite ? 7 : 0;
+        const rookChar = isWhite ? 'R' : 'r';
+
+        if (!kingMoved && r === kr && c === 4) {
+          // Kingside Castling (O-O)
+          if (!rookKMoved && boardState[kr][7] === rookChar) {
+            if (!boardState[kr][5] && !boardState[kr][6]) {
+              if (!isSquareAttacked(kr, 4, color) && !isSquareAttacked(kr, 5, color) && !isSquareAttacked(kr, 6, color)) {
+                moves.push({ r: kr, c: 6, isCastling: 'kingside' });
+              }
+            }
+          }
+          // Queenside Castling (O-O-O)
+          if (!rookQMoved && boardState[kr][0] === rookChar) {
+            if (!boardState[kr][1] && !boardState[kr][2] && !boardState[kr][3]) {
+              if (!isSquareAttacked(kr, 4, color) && !isSquareAttacked(kr, 3, color) && !isSquareAttacked(kr, 2, color)) {
+                moves.push({ r: kr, c: 2, isCastling: 'queenside' });
+              }
+            }
+          }
+        }
       } else {
         const dirs = (type === 'r' || type === 'q') ? [[-1,0],[1,0],[0,-1],[0,1]] : [];
         if (type === 'b' || type === 'q') dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
@@ -708,19 +780,49 @@
     function makeMove(fromR, fromC, toR, toC) {
       const piece = boardState[fromR][fromC];
       const target = boardState[toR][toC];
+      const isWhite = isWhitePiece(piece);
 
+      // Handle Captures
       if (target) {
         if (isWhitePiece(target)) capturedWhite.push(target);
         else capturedBlack.push(target);
       }
 
+      // Handle Castling Rook Movement
+      if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
+        if (toC === 6) {
+          // Kingside: Move Rook from col 7 to col 5
+          boardState[fromR][5] = boardState[fromR][7];
+          boardState[fromR][7] = '';
+          moveHistory.push('O-O');
+        } else if (toC === 2) {
+          // Queenside: Move Rook from col 0 to col 3
+          boardState[fromR][3] = boardState[fromR][0];
+          boardState[fromR][0] = '';
+          moveHistory.push('O-O-O');
+        }
+      } else {
+        const files = ['a','b','c','d','e','f','g','h'];
+        const pieceSym = piece.toUpperCase() === 'P' ? '' : piece.toUpperCase();
+        const capSym = target ? 'x' : '';
+        moveHistory.push(`${pieceSym}${files[fromC]}${8-fromR}${capSym}${files[toC]}${8-toR}`);
+      }
+
+      // Move main piece
       boardState[toR][toC] = piece;
       boardState[fromR][fromC] = '';
 
-      const files = ['a','b','c','d','e','f','g','h'];
-      const pieceSym = piece.toUpperCase() === 'P' ? '' : piece.toUpperCase();
-      const capSym = target ? 'x' : '';
-      moveHistory.push(`${pieceSym}${files[fromC]}${8-fromR}${capSym}${files[toC]}${8-toR}`);
+      // Pawn Promotion to Queen
+      if (piece === 'P' && toR === 0) boardState[toR][toC] = 'Q';
+      if (piece === 'p' && toR === 7) boardState[toR][toC] = 'q';
+
+      // Update hasMoved tracking flags
+      if (piece === 'K') hasMoved.whiteKing = true;
+      if (piece === 'k') hasMoved.blackKing = true;
+      if (piece === 'R' && fromR === 7 && fromC === 7) hasMoved.whiteRookK = true;
+      if (piece === 'R' && fromR === 7 && fromC === 0) hasMoved.whiteRookQ = true;
+      if (piece === 'r' && fromR === 0 && fromC === 7) hasMoved.blackRookK = true;
+      if (piece === 'r' && fromR === 0 && fromC === 0) hasMoved.blackRookQ = true;
 
       currentTurn = currentTurn === 'white' ? 'black' : 'white';
       selectedSquare = null;
@@ -972,14 +1074,12 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    // Animation Loop
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     }
 
-    // Initialize on page load
     initThreeJS();
     initGame();
     animate();
