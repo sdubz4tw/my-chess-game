@@ -1,5 +1,5 @@
 /**
- * 360° Photorealistic 3D Piece Geometries & Custom Donkey Knight Asset
+ * 360° Photorealistic 3D Piece Geometries & Dynamic Admin Customization System
  */
 
 let texWhiteWood = null;
@@ -7,6 +7,10 @@ let texBlackWood = null;
 let bumpTexWood = null;
 let texDonkeyKnight = null;
 export let dataUrlDonkey = 'assets/donkey_knight.png';
+
+// Global Registry for Admin Custom Piece Textures & 3D Models
+export const customPieceTextures = {};
+export const customPieceModels = {}; // Loaded Three.js Object3D / Meshes
 
 function generateProceduralWoodTextures() {
   if (texWhiteWood && texBlackWood) return;
@@ -76,8 +80,8 @@ function generateProceduralWoodTextures() {
     t.repeat.set(1, 2);
   });
 
-  // Load and Process Custom Donkey Image Cutout
   loadDonkeyTexture();
+  loadSavedCustomizations();
 }
 
 function loadDonkeyTexture() {
@@ -92,7 +96,6 @@ function loadDonkeyTexture() {
     const imgData = ctx.getImageData(0, 0, img.width, img.height);
     const data = imgData.data;
 
-    // Key out light gray background (#e0e0e0 - #f5f5f5)
     for (let i = 0; i < data.length; i += 4) {
       const r = data[i], g = data[i+1], b = data[i+2];
       if (r > 210 && g > 210 && b > 210) {
@@ -105,6 +108,45 @@ function loadDonkeyTexture() {
     texDonkeyKnight = new THREE.CanvasTexture(canvas);
   };
   img.src = 'assets/donkey_knight.png';
+}
+
+export function loadSavedCustomizations() {
+  const types = ['P','N','B','R','Q','K','p','n','b','r','q','k'];
+  const loader = new THREE.TextureLoader();
+
+  types.forEach(t => {
+    const savedImg = localStorage.getItem(`custom_piece_img_${t}`);
+    if (savedImg) {
+      customPieceTextures[t] = loader.load(savedImg);
+    }
+  });
+}
+
+export function setCustomPieceImage(pieceType, dataUrl) {
+  const loader = new THREE.TextureLoader();
+  customPieceTextures[pieceType] = loader.load(dataUrl);
+  localStorage.setItem(`custom_piece_img_${pieceType}`, dataUrl);
+}
+
+export function setCustomPieceModel(pieceType, threeObject) {
+  customPieceModels[pieceType] = threeObject;
+}
+
+export function clearCustomPiece(pieceType) {
+  delete customPieceTextures[pieceType];
+  delete customPieceModels[pieceType];
+  localStorage.removeItem(`custom_piece_img_${pieceType}`);
+  localStorage.removeItem(`custom_piece_model_${pieceType}`);
+}
+
+export function clearAllCustomizations() {
+  Object.keys(customPieceTextures).forEach(k => delete customPieceTextures[k]);
+  Object.keys(customPieceModels).forEach(k => delete customPieceModels[k]);
+  const types = ['P','N','B','R','Q','K','p','n','b','r','q','k'];
+  types.forEach(t => {
+    localStorage.removeItem(`custom_piece_img_${t}`);
+    localStorage.removeItem(`custom_piece_model_${t}`);
+  });
 }
 
 export function createWoodMaterials() {
@@ -142,15 +184,54 @@ export function build3DPieceMesh(type, materials) {
   const group = new THREE.Group();
   const lowerType = type.toLowerCase();
 
-  // Green Felt Base Pad
+  // 1. Check for Admin Uploaded 3D Model (.gltf / .glb / .obj)
+  if (customPieceModels[type]) {
+    const cloneModel = customPieceModels[type].clone(true);
+    group.add(cloneModel);
+    return group;
+  }
+
+  // 2. Green Felt Base Pad
   const feltGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.04, 24);
   const feltMesh = new THREE.Mesh(feltGeo, materials.matFeltBase);
   feltMesh.position.y = -0.02;
   group.add(feltMesh);
 
-  let points = [];
+  // 3. Check for Admin Uploaded Custom Image Texture
+  if (customPieceTextures[type]) {
+    const baseGeo = new THREE.CylinderGeometry(0.38, 0.42, 0.12, 24);
+    const baseMesh = new THREE.Mesh(baseGeo, pieceMat);
+    baseMesh.position.y = 0.06;
+    baseMesh.castShadow = true;
+    baseMesh.receiveShadow = true;
+    group.add(baseMesh);
 
-  // CUSTOM DONKEY KNIGHT PIECE (N / n)
+    const ringGeo = new THREE.TorusGeometry(0.36, 0.025, 12, 24);
+    const ringMesh = new THREE.Mesh(ringGeo, accentMat);
+    ringMesh.rotation.x = Math.PI / 2;
+    ringMesh.position.y = 0.12;
+    group.add(ringMesh);
+
+    const spriteMat = new THREE.MeshStandardMaterial({
+      map: customPieceTextures[type],
+      transparent: true,
+      alphaTest: 0.1,
+      side: THREE.DoubleSide,
+      roughness: 0.3
+    });
+
+    const heightScale = 1.25;
+    const planeGeo = new THREE.PlaneGeometry(0.85, heightScale);
+    const spriteMesh = new THREE.Mesh(planeGeo, spriteMat);
+    spriteMesh.position.y = 0.12 + (heightScale / 2);
+    spriteMesh.castShadow = true;
+    group.add(spriteMesh);
+
+    group.userData = { spriteMesh };
+    return group;
+  }
+
+  // Default Custom Donkey Knight (N / n)
   if (lowerType === 'n') {
     const baseGeo = new THREE.CylinderGeometry(0.38, 0.42, 0.12, 24);
     const baseMesh = new THREE.Mesh(baseGeo, pieceMat);
@@ -184,6 +265,8 @@ export function build3DPieceMesh(type, materials) {
     group.userData = { spriteMesh };
     return group;
   }
+
+  let points = [];
 
   if (lowerType === 'p') { // PAWN
     points = [
