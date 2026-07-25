@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity Full 3D Solid Chess</title>
+  <title>Antigravity 3D Chess - Staunton Knight Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -58,6 +58,21 @@
       margin: 0;
       padding: 0;
       user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      outline: none !important;
+    }
+
+    canvas, div, img, button, select {
+      outline: none !important;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    img {
+      pointer-events: none;
+      -webkit-user-drag: none;
     }
 
     body {
@@ -113,6 +128,14 @@
       gap: 0.75rem;
     }
 
+    .brand img {
+      width: 34px;
+      height: 34px;
+      vertical-align: middle;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+
     .brand h1 {
       font-family: 'Cinzel', serif;
       font-size: 1.4rem;
@@ -138,7 +161,7 @@
       font-size: 0.88rem;
       font-weight: 500;
       cursor: pointer;
-      outline: none;
+      outline: none !important;
       transition: all 0.2s ease;
     }
 
@@ -276,6 +299,8 @@
       width: 22px;
       height: 22px;
       object-fit: contain;
+      pointer-events: none;
+      -webkit-user-drag: none;
       filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
     }
 
@@ -359,12 +384,15 @@
       flex-direction: column;
       align-items: center;
       gap: 0.5rem;
+      outline: none !important;
     }
 
     .promo-btn img {
       width: 48px;
       height: 48px;
       object-fit: contain;
+      pointer-events: none;
+      -webkit-user-drag: none;
     }
 
     .promo-btn span {
@@ -392,6 +420,11 @@
       margin-bottom: 0.5rem;
     }
 
+    /* Clean Subtle Green Overlay Class for Highlights */
+    .highlight {
+      background-color: rgba(76, 175, 80, 0.4) !important;
+    }
+
     @media (max-width: 768px) {
       .hud-header { flex-direction: column; gap: 0.75rem; }
       .sidebar { width: 100%; }
@@ -407,8 +440,8 @@
   <div class="hud">
     <div class="hud-header">
       <div class="brand">
-        <span style="font-size: 1.6rem;">👑</span>
-        <h1>Full 3D Solid Chess</h1>
+        <img id="brandIcon" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" alt="Knight Icon">
+        <h1>Staunton Knight Edition</h1>
       </div>
 
       <div class="controls-top">
@@ -501,20 +534,20 @@
   </div>
 
   <script>
-    // --- 1. SVG ASSET URLS FOR UI & CAPTURED TRAYS ---
+    // --- 1. WIKIMEDIA HIGH-QUALITY STAUNTON SVG ASSET URLS ---
     const PIECES_SVG = {
       'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
       'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
       'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
       'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-      'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+      'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', // Professional Staunton White Knight
       'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
 
       'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
       'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
       'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
       'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-      'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+      'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', // Professional Staunton Black Knight
       'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
     };
 
@@ -705,7 +738,7 @@
       const group = new THREE.Group();
       const lowerType = type.toLowerCase();
 
-      // 1. Green Felt Base Pad
+      // Green Felt Base Pad
       const feltGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.04, 24);
       const feltMesh = new THREE.Mesh(feltGeo, matFeltBase);
       feltMesh.position.y = -0.02;
@@ -729,7 +762,6 @@
         pawnBody.receiveShadow = true;
         group.add(pawnBody);
 
-        // 3D Solid Sphere Head
         const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), pieceMat);
         ballMesh.position.y = 0.72;
         ballMesh.castShadow = true;
@@ -751,7 +783,6 @@
         rookBody.receiveShadow = true;
         group.add(rookBody);
 
-        // 3D Parapet Crenellations
         for (let i = 0; i < 4; i++) {
           const block = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.12), pieceMat);
           const angle = (i * Math.PI) / 2;
@@ -760,7 +791,7 @@
           group.add(block);
         }
 
-      } else if (lowerType === 'n') { // KNIGHT (Sculpted 3D Horse)
+      } else if (lowerType === 'n') { // KNIGHT (High-Quality Professional Staunton Knight Sculpt)
         points = [
           new THREE.Vector2(0, 0),
           new THREE.Vector2(0.38, 0.06),
@@ -773,25 +804,34 @@
         knightBase.castShadow = true;
         group.add(knightBase);
 
-        // 3D Solid Horse Head Sculpt
+        // Highly Detailed 3D Staunton Knight Horse Head
         const headGroup = new THREE.Group();
-        const mainHead = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.48, 0.42), pieceMat);
-        mainHead.position.set(0, 0.75, 0.06);
+        
+        // Neck & Arched Back
+        const mainHead = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.52, 0.42), pieceMat);
+        mainHead.position.set(0, 0.78, 0.04);
         mainHead.rotation.x = 0.22;
         mainHead.castShadow = true;
         headGroup.add(mainHead);
 
-        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.26, 0.28), pieceMat);
-        snout.position.set(0, 0.65, 0.24);
-        snout.rotation.x = 0.45;
+        // Snout & Muzzle
+        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.28, 0.30), pieceMat);
+        snout.position.set(0, 0.68, 0.26);
+        snout.rotation.x = 0.48;
         snout.castShadow = true;
         headGroup.add(snout);
 
-        // 3D Ears
-        const ear1 = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 4), pieceMat);
+        // Carved Mane Ridge along back
+        const mane = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.45, 0.18), accentMat);
+        mane.position.set(0, 0.82, -0.16);
+        mane.rotation.x = -0.15;
+        headGroup.add(mane);
+
+        // Pointed Ears
+        const ear1 = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 4), pieceMat);
         const ear2 = ear1.clone();
-        ear1.position.set(-0.08, 1.04, -0.06);
-        ear2.position.set(0.08, 1.04, -0.06);
+        ear1.position.set(-0.08, 1.08, -0.06);
+        ear2.position.set(0.08, 1.08, -0.06);
         ear1.castShadow = true;
         ear2.castShadow = true;
         headGroup.add(ear1);
@@ -814,14 +854,12 @@
         bishopBody.receiveShadow = true;
         group.add(bishopBody);
 
-        // 3D Oval Miter Head
         const miter = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), pieceMat);
         miter.scale.set(1, 1.35, 1);
         miter.position.y = 1.05;
         miter.castShadow = true;
         group.add(miter);
 
-        // Top Finial Ball
         const topBall = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 16), accentMat);
         topBall.position.y = 1.38;
         topBall.castShadow = true;
@@ -842,7 +880,6 @@
         queenBody.receiveShadow = true;
         group.add(queenBody);
 
-        // 3D Coronet Spikes & Finial
         const crownRing = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.03, 12, 24), accentMat);
         crownRing.rotation.x = Math.PI / 2;
         crownRing.position.y = 1.25;
@@ -868,7 +905,6 @@
         kingBody.receiveShadow = true;
         group.add(kingBody);
 
-        // 3D Formée Cross Finial
         const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.07, 0.07), accentMat);
         const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.26, 0.07), accentMat);
         crossH.position.y = 1.50;
@@ -891,6 +927,7 @@
     }
 
     function createSelectionHighlights() {
+      // Clean amber ring highlight for selection
       const ringGeo = new THREE.RingGeometry(0.35, 0.46, 32);
       highlightRing = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xd97706, side: THREE.DoubleSide }));
       highlightRing.rotation.x = Math.PI / 2;
@@ -898,6 +935,7 @@
       highlightRing.visible = false;
       scene.add(highlightRing);
 
+      // Clean red warning ring for King in check
       const checkGeo = new THREE.RingGeometry(0.32, 0.48, 32);
       checkRing = new THREE.Mesh(checkGeo, new THREE.MeshBasicMaterial({ color: 0xdc2626, side: THREE.DoubleSide }));
       checkRing.rotation.x = Math.PI / 2;
@@ -926,6 +964,7 @@
       }
     }
 
+    // Clean, subtle semi-transparent move markers (No glowing flickering box shadow artifacts!)
     function renderValidMoveMarkers() {
       moveMarkers.forEach(m => scene.remove(m));
       moveMarkers = [];
@@ -933,17 +972,20 @@
       validMoves.forEach(m => {
         const isCapture = boardState[m.r][m.c] !== '' || m.isEnPassant;
         const markerGeo = (isCapture || m.isCastling)
-          ? new THREE.RingGeometry(0.35, 0.46, 24)
-          : new THREE.CircleGeometry(0.18, 24);
+          ? new THREE.RingGeometry(0.34, 0.46, 32)
+          : new THREE.CircleGeometry(0.20, 32);
+        
+        // Clean semi-transparent green overlay (rgba(76, 175, 80, 0.4) -> 0x4caf50 at 0.4 opacity)
         const markerMat = new THREE.MeshBasicMaterial({
-          color: m.isCastling ? 0x2563eb : (isCapture ? 0xdc2626 : 0x16a34a),
+          color: m.isCastling ? 0x2563eb : (isCapture ? 0xdc2626 : 0x4caf50),
           side: THREE.DoubleSide,
           transparent: true,
-          opacity: 0.85
+          opacity: 0.4,
+          depthWrite: false
         });
         const markerMesh = new THREE.Mesh(markerGeo, markerMat);
         markerMesh.rotation.x = Math.PI / 2;
-        markerMesh.position.set(m.c - 3.5, 0.106, m.r - 3.5);
+        markerMesh.position.set(m.c - 3.5, 0.102, m.r - 3.5); // Resting cleanly above square
         scene.add(markerMesh);
         moveMarkers.push(markerMesh);
       });
