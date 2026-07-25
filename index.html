@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity 3D Chess - Engraved Woodcut Edition</title>
+  <title>Antigravity Full 3D Solid Chess</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -111,12 +111,6 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
-    }
-
-    .brand img {
-      width: 32px;
-      height: 32px;
-      vertical-align: middle;
     }
 
     .brand h1 {
@@ -413,16 +407,16 @@
   <div class="hud">
     <div class="hud-header">
       <div class="brand">
-        <img id="brandIcon" src="https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" alt="Knight Icon">
-        <h1>Engraved Woodcut Chess</h1>
+        <span style="font-size: 1.6rem;">👑</span>
+        <h1>Full 3D Solid Chess</h1>
       </div>
 
       <div class="controls-top">
         <select id="boardTheme" class="select-input" onchange="changeTheme()">
-          <option value="woodcut" selected>Vintage Woodcut Engraving (Image)</option>
-          <option value="vintage">Natural Staunton Boxwood</option>
-          <option value="porcelain">Cobalt Porcelain (Blue)</option>
-          <option value="cyber">Midnight Cyber (Dark)</option>
+          <option value="woodcut" selected>Vintage Engraved Woodcut (3D)</option>
+          <option value="vintage">Natural Boxwood & Rosewood (3D)</option>
+          <option value="porcelain">Cobalt Porcelain (3D)</option>
+          <option value="cyber">Midnight Cyber (3D)</option>
         </select>
 
         <select id="gameMode" class="select-input" onchange="changeGameMode()">
@@ -507,7 +501,7 @@
   </div>
 
   <script>
-    // --- 1. WIKIMEDIA STUNNING WOODCUT ENGRAVED PIECE SVGS ---
+    // --- 1. SVG ASSET URLS FOR UI & CAPTURED TRAYS ---
     const PIECES_SVG = {
       'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
       'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
@@ -564,19 +558,10 @@
     let checkRing = null;
     let moveMarkers = [];
     let raycaster, mouse;
-    const textureCache = {};
 
     let matLightSquare, matDarkSquare, matFrame, matFrameGold;
     let matWhitePiece, matBlackPiece, matWhiteAccent, matBlackAccent;
     let matFeltBase;
-
-    function preloadSVGTextures() {
-      const loader = new THREE.TextureLoader();
-      Object.keys(PIECES_SVG).forEach(type => {
-        textureCache[type] = loader.load(PIECES_SVG[type]);
-      });
-    }
-    preloadSVGTextures();
 
     function applyThemeMaterials(themeName) {
       matFeltBase = new THREE.MeshStandardMaterial({ color: 0x1b4d2e, roughness: 0.8 });
@@ -612,15 +597,15 @@
         matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x3d2012, roughness: 0.3, metalness: 0.2 });
         if (scene) scene.background = new THREE.Color(0xdcd0bc);
       } else {
-        // 'woodcut' - Vintage Woodcut Engraving (Matching exact attached illustration image)
-        matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf7f3eb, roughness: 0.3 }); // Engraved Parchment
-        matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x3c3836, roughness: 0.35 });  // Dark Etched Slate
-        matFrame = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.25 });      // Dark Ebony Frame
+        // 'woodcut' - 3D Solid Engraved Woodcut Theme
+        matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf7f3eb, roughness: 0.3 });
+        matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x3c3836, roughness: 0.35 });
+        matFrame = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.25 });
         matFrameGold = new THREE.MeshStandardMaterial({ color: 0x78716c, roughness: 0.3, metalness: 0.5 });
-        matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.0 });  // Crisp Woodcut White
-        matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.25, metalness: 0.0 }); // Crisp Woodcut Ebony
-        matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.3, metalness: 0.1 });
-        matBlackAccent = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0.1 });
+        matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xfbf9f5, roughness: 0.2, metalness: 0.0 });
+        matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x221e1c, roughness: 0.25, metalness: 0.0 });
+        matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0x221e1c, roughness: 0.3, metalness: 0.1 });
+        matBlackAccent = new THREE.MeshStandardMaterial({ color: 0xfbf9f5, roughness: 0.3, metalness: 0.1 });
         if (scene) scene.background = new THREE.Color(0xe5dec9);
       }
     }
@@ -650,7 +635,7 @@
       controls.minDistance = 5;
       controls.maxDistance = 18;
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
       scene.add(ambientLight);
 
       const dirLight = new THREE.DirectionalLight(0xfff5ea, 1.25);
@@ -711,7 +696,7 @@
       scene.add(boardGroup);
     }
 
-    // High-precision piece model matching the woodcut engraving illustration
+    // --- 100% FULL 3D SOLID PROCEDURAL GEOMETRIES FOR ALL CHESS PIECES ---
     function createPieceMesh(type) {
       const isWhite = type === type.toUpperCase();
       const pieceMat = isWhite ? matWhitePiece : matBlackPiece;
@@ -720,50 +705,188 @@
       const group = new THREE.Group();
       const lowerType = type.toLowerCase();
 
-      // 1. Green Felt Base Pad (Staunton Base)
+      // 1. Green Felt Base Pad
       const feltGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.04, 24);
       const feltMesh = new THREE.Mesh(feltGeo, matFeltBase);
       feltMesh.position.y = -0.02;
       group.add(feltMesh);
 
-      // 2. Base Pedestal Ring
-      const baseGeo = new THREE.CylinderGeometry(0.38, 0.42, 0.12, 24);
-      const baseMesh = new THREE.Mesh(baseGeo, pieceMat);
-      baseMesh.position.y = 0.06;
-      baseMesh.castShadow = true;
-      baseMesh.receiveShadow = true;
-      group.add(baseMesh);
+      let points = [];
 
-      const ringGeo = new THREE.TorusGeometry(0.36, 0.025, 12, 24);
+      if (lowerType === 'p') { // PAWN
+        points = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.38, 0.06),
+          new THREE.Vector2(0.32, 0.14),
+          new THREE.Vector2(0.18, 0.36),
+          new THREE.Vector2(0.15, 0.50),
+          new THREE.Vector2(0.22, 0.54),
+          new THREE.Vector2(0.18, 0.58),
+          new THREE.Vector2(0, 0.65)
+        ];
+        const pawnBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
+        pawnBody.castShadow = true;
+        pawnBody.receiveShadow = true;
+        group.add(pawnBody);
+
+        // 3D Solid Sphere Head
+        const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), pieceMat);
+        ballMesh.position.y = 0.72;
+        ballMesh.castShadow = true;
+        group.add(ballMesh);
+
+      } else if (lowerType === 'r') { // ROOK
+        points = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.38, 0.06),
+          new THREE.Vector2(0.33, 0.15),
+          new THREE.Vector2(0.25, 0.68),
+          new THREE.Vector2(0.34, 0.78),
+          new THREE.Vector2(0.34, 0.98),
+          new THREE.Vector2(0.25, 0.98),
+          new THREE.Vector2(0, 0.98)
+        ];
+        const rookBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
+        rookBody.castShadow = true;
+        rookBody.receiveShadow = true;
+        group.add(rookBody);
+
+        // 3D Parapet Crenellations
+        for (let i = 0; i < 4; i++) {
+          const block = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.12), pieceMat);
+          const angle = (i * Math.PI) / 2;
+          block.position.set(Math.cos(angle) * 0.28, 1.04, Math.sin(angle) * 0.28);
+          block.castShadow = true;
+          group.add(block);
+        }
+
+      } else if (lowerType === 'n') { // KNIGHT (Sculpted 3D Horse)
+        points = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.38, 0.06),
+          new THREE.Vector2(0.32, 0.15),
+          new THREE.Vector2(0.24, 0.45),
+          new THREE.Vector2(0.28, 0.52),
+          new THREE.Vector2(0, 0.55)
+        ];
+        const knightBase = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
+        knightBase.castShadow = true;
+        group.add(knightBase);
+
+        // 3D Solid Horse Head Sculpt
+        const headGroup = new THREE.Group();
+        const mainHead = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.48, 0.42), pieceMat);
+        mainHead.position.set(0, 0.75, 0.06);
+        mainHead.rotation.x = 0.22;
+        mainHead.castShadow = true;
+        headGroup.add(mainHead);
+
+        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.26, 0.28), pieceMat);
+        snout.position.set(0, 0.65, 0.24);
+        snout.rotation.x = 0.45;
+        snout.castShadow = true;
+        headGroup.add(snout);
+
+        // 3D Ears
+        const ear1 = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 4), pieceMat);
+        const ear2 = ear1.clone();
+        ear1.position.set(-0.08, 1.04, -0.06);
+        ear2.position.set(0.08, 1.04, -0.06);
+        ear1.castShadow = true;
+        ear2.castShadow = true;
+        headGroup.add(ear1);
+        headGroup.add(ear2);
+
+        group.add(headGroup);
+
+      } else if (lowerType === 'b') { // BISHOP
+        points = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.38, 0.06),
+          new THREE.Vector2(0.32, 0.15),
+          new THREE.Vector2(0.19, 0.65),
+          new THREE.Vector2(0.28, 0.75),
+          new THREE.Vector2(0.22, 0.96),
+          new THREE.Vector2(0, 1.10)
+        ];
+        const bishopBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
+        bishopBody.castShadow = true;
+        bishopBody.receiveShadow = true;
+        group.add(bishopBody);
+
+        // 3D Oval Miter Head
+        const miter = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), pieceMat);
+        miter.scale.set(1, 1.35, 1);
+        miter.position.y = 1.05;
+        miter.castShadow = true;
+        group.add(miter);
+
+        // Top Finial Ball
+        const topBall = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 16), accentMat);
+        topBall.position.y = 1.38;
+        topBall.castShadow = true;
+        group.add(topBall);
+
+      } else if (lowerType === 'q') { // QUEEN
+        points = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.40, 0.06),
+          new THREE.Vector2(0.34, 0.15),
+          new THREE.Vector2(0.21, 0.75),
+          new THREE.Vector2(0.35, 0.96),
+          new THREE.Vector2(0.31, 1.25),
+          new THREE.Vector2(0, 1.35)
+        ];
+        const queenBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
+        queenBody.castShadow = true;
+        queenBody.receiveShadow = true;
+        group.add(queenBody);
+
+        // 3D Coronet Spikes & Finial
+        const crownRing = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.03, 12, 24), accentMat);
+        crownRing.rotation.x = Math.PI / 2;
+        crownRing.position.y = 1.25;
+        group.add(crownRing);
+
+        const topBall = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), accentMat);
+        topBall.position.y = 1.42;
+        topBall.castShadow = true;
+        group.add(topBall);
+
+      } else if (lowerType === 'k') { // KING
+        points = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.42, 0.06),
+          new THREE.Vector2(0.35, 0.15),
+          new THREE.Vector2(0.23, 0.8),
+          new THREE.Vector2(0.36, 1.05),
+          new THREE.Vector2(0.30, 1.32),
+          new THREE.Vector2(0, 1.38)
+        ];
+        const kingBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
+        kingBody.castShadow = true;
+        kingBody.receiveShadow = true;
+        group.add(kingBody);
+
+        // 3D Formée Cross Finial
+        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.07, 0.07), accentMat);
+        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.26, 0.07), accentMat);
+        crossH.position.y = 1.50;
+        crossV.position.y = 1.50;
+        crossH.castShadow = true;
+        crossV.castShadow = true;
+        group.add(crossH);
+        group.add(crossV);
+      }
+
+      // Waist Ring Accent
+      const ringGeo = new THREE.TorusGeometry(points[2].x * 0.9, 0.025, 12, 24);
       const ringMesh = new THREE.Mesh(ringGeo, accentMat);
       ringMesh.rotation.x = Math.PI / 2;
-      ringMesh.position.y = 0.12;
+      ringMesh.position.y = points[2].y;
       group.add(ringMesh);
 
-      // 3. High-Res Woodcut Engraved Vector Face Standee
-      const tex = textureCache[type] || new THREE.TextureLoader().load(PIECES_SVG[type]);
-      const spriteMat = new THREE.MeshStandardMaterial({
-        map: tex,
-        transparent: true,
-        alphaTest: 0.1,
-        side: THREE.DoubleSide,
-        roughness: 0.3
-      });
-
-      let heightScale = 0.88;
-      if (lowerType === 'k') heightScale = 1.18;
-      else if (lowerType === 'q') heightScale = 1.12;
-      else if (lowerType === 'r') heightScale = 0.92;
-      else if (lowerType === 'b') heightScale = 1.02;
-      else if (lowerType === 'n') heightScale = 0.96;
-
-      const planeGeo = new THREE.PlaneGeometry(heightScale, heightScale);
-      const spriteMesh = new THREE.Mesh(planeGeo, spriteMat);
-      spriteMesh.position.y = 0.12 + (heightScale / 2);
-      spriteMesh.castShadow = true;
-      group.add(spriteMesh);
-
-      group.userData = { spriteMesh };
+      group.scale.set(0.9, 0.9, 0.9);
       return group;
     }
 
@@ -793,6 +916,9 @@
           if (type) {
             const mesh = createPieceMesh(type);
             mesh.position.set(c - 3.5, 0.1, r - 3.5);
+            if (type === type.toLowerCase()) {
+              mesh.rotation.y = Math.PI; // Black pieces face White
+            }
             scene.add(mesh);
             pieceMeshes.push({ mesh, row: r, col: c, type });
           }
@@ -1417,13 +1543,6 @@
 
     function animate() {
       requestAnimationFrame(animate);
-
-      pieceMeshes.forEach(p => {
-        if (p.mesh.userData && p.mesh.userData.spriteMesh) {
-          p.mesh.userData.spriteMesh.rotation.y = camera.rotation.y;
-        }
-      });
-
       controls.update();
       renderer.render(scene, camera);
     }
