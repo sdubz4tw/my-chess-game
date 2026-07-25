@@ -152,8 +152,6 @@ export function clearAllCustomizations() {
 export function createWoodMaterials() {
   generateProceduralWoodTextures();
 
-  const matFeltBase = new THREE.MeshStandardMaterial({ color: 0x1b4d2e, roughness: 0.85 });
-
   const matWhitePiece = new THREE.MeshStandardMaterial({
     map: texWhiteWood,
     bumpMap: bumpTexWood,
@@ -173,7 +171,7 @@ export function createWoodMaterials() {
   const matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.25, metalness: 0.75 });
   const matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x22120a, roughness: 0.3, metalness: 0.2 });
 
-  return { matWhitePiece, matBlackPiece, matWhiteAccent, matBlackAccent, matFeltBase };
+  return { matWhitePiece, matBlackPiece, matWhiteAccent, matBlackAccent };
 }
 
 export function build3DPieceMesh(type, materials) {
@@ -191,13 +189,7 @@ export function build3DPieceMesh(type, materials) {
     return group;
   }
 
-  // 2. Green Felt Base Pad
-  const feltGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.04, 24);
-  const feltMesh = new THREE.Mesh(feltGeo, materials.matFeltBase);
-  feltMesh.position.y = -0.02;
-  group.add(feltMesh);
-
-  // 3. Check for Admin Uploaded Custom Image Texture
+  // 2. Check for Admin Uploaded Custom Image Texture
   if (customPieceTextures[type]) {
     const baseGeo = new THREE.CylinderGeometry(0.38, 0.42, 0.12, 24);
     const baseMesh = new THREE.Mesh(baseGeo, pieceMat);
