@@ -1,8 +1,9 @@
 /**
- * 3D Scene Setup, Lighting, OrbitControls, Memory Disposal, Raycasting, and Cinematic Capture Cutscenes & VFX
+ * 3D Scene Setup, Lighting, OrbitControls, Memory Disposal, Raycasting, and Piece-Specific Attack Cutscenes
  */
 
 import { createWoodMaterials, build3DPieceMesh } from './pieces3d.js';
+import { AttackManager } from './attacks3d.js';
 
 export class Scene3D {
   constructor(containerId, onSquareClicked) {
@@ -21,20 +22,19 @@ export class Scene3D {
     this.moveMarkers = [];
     this.highlightRing = null;
     this.checkRing = null;
-    this.vfxGroup = new THREE.Group();
 
     this.materials = null;
     this.themeMaterials = {};
     this.currentTheme = 'woodcut';
 
     this.isAnimatingCutscene = false;
+    this.attackManager = new AttackManager(this);
 
     this.init();
   }
 
   init() {
     this.scene = new THREE.Scene();
-    this.scene.add(this.vfxGroup);
 
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     this.camera.position.set(0, 8.5, 9.5);
@@ -201,141 +201,10 @@ export class Scene3D {
   }
 
   /**
-   * CINEMATIC CAPTURE CUTSCENE WITH 3D SLASH VFX & PARTICLE BURST
+   * DELEGATE CUTSCENES TO ATTACK MANAGER
    */
-  triggerCaptureCutscene(fromR, fromC, toR, toC, onComplete) {
-    this.isAnimatingCutscene = true;
-
-    const attackerObj = this.pieceMeshes.find(p => p.row === fromR && p.col === fromC);
-    const victimObj = this.pieceMeshes.find(p => p.row === toR && p.col === toC);
-
-    const targetX = toC - 3.5;
-    const targetZ = toR - 3.5;
-    const fromX = fromC - 3.5;
-    const fromZ = fromR - 3.5;
-
-    // Save Original Camera Position & Control Target
-    const origCamPos = this.camera.position.clone();
-    const origTarget = this.controls.target.clone();
-
-    // Target Camera Position (Zoomed in close to capture square)
-    const cutsceneCamPos = new THREE.Vector3(targetX + 0.8, 2.2, targetZ + 2.4);
-    const cutsceneTarget = new THREE.Vector3(targetX, 0.4, targetZ);
-
-    let progress = 0;
-    const duration = 1200; // 1.2 second cutscene
-    const startTime = performance.now();
-
-    // 1. Create Glowing Slash Arc VFX Mesh
-    const slashGeo = new THREE.TorusGeometry(0.55, 0.05, 16, 32, Math.PI * 0.85);
-    const slashMat = new THREE.MeshBasicMaterial({
-      color: 0xff3300,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.95
-    });
-    const slashMesh = new THREE.Mesh(slashGeo, slashMat);
-    slashMesh.rotation.x = Math.PI / 3;
-    slashMesh.rotation.z = Math.PI / 4;
-    slashMesh.position.set(targetX, 0.4, targetZ);
-    slashMesh.scale.set(0.1, 0.1, 0.1);
-    this.vfxGroup.add(slashMesh);
-
-    // 2. Create 3D Spark Particle Explosion Burst
-    const particleCount = 35;
-    const particles = [];
-    for (let i = 0; i < particleCount; i++) {
-      const pMat = new THREE.MeshBasicMaterial({
-        color: Math.random() > 0.4 ? 0xff6600 : (Math.random() > 0.5 ? 0xffcc00 : 0xdc2626),
-        transparent: true,
-        opacity: 1
-      });
-      const pMesh = new THREE.Mesh(new THREE.SphereGeometry(0.04 + Math.random() * 0.03, 8, 8), pMat);
-      pMesh.position.set(targetX, 0.3, targetZ);
-
-      const vel = new THREE.Vector3(
-        (Math.random() - 0.5) * 4.5,
-        1.5 + Math.random() * 4.0,
-        (Math.random() - 0.5) * 4.5
-      );
-      this.vfxGroup.add(pMesh);
-      particles.push({ mesh: pMesh, vel });
-    }
-
-    const animateCutsceneFrame = (now) => {
-      const elapsed = now - startTime;
-      progress = Math.min(elapsed / duration, 1.0);
-
-      // Smooth Easing Curves
-      const easeInOut = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-      // Phase A: Camera Zoom In (0.0 to 0.4)
-      if (progress < 0.45) {
-        const camFactor = progress / 0.45;
-        this.camera.position.lerpVectors(origCamPos, cutsceneCamPos, camFactor);
-        this.controls.target.lerpVectors(origTarget, cutsceneTarget, camFactor);
-      } 
-      // Phase B: Attacker Charge & Impact Slash (0.25 to 0.70)
-      if (progress >= 0.20 && progress <= 0.70) {
-        const moveFactor = (progress - 0.20) / 0.50;
-        if (attackerObj) {
-          attackerObj.mesh.position.x = THREE.MathUtils.lerp(fromX, targetX, moveFactor);
-          attackerObj.mesh.position.z = THREE.MathUtils.lerp(fromZ, targetZ, moveFactor);
-          attackerObj.mesh.position.y = 0.1 + Math.sin(moveFactor * Math.PI) * 0.4;
-        }
-
-        // Expand Slash Arc & Particles at Impact (progress >= 0.40)
-        if (progress >= 0.40) {
-          const slashFactor = (progress - 0.40) / 0.30;
-          slashMesh.scale.set(1 + slashFactor * 1.5, 1 + slashFactor * 1.5, 1 + slashFactor * 1.5);
-          slashMesh.rotation.z += 0.15;
-          slashMat.opacity = Math.max(0, 1.0 - slashFactor);
-
-          // Animate Defeat of Captured Victim Piece (Tip Over & Fade)
-          if (victimObj) {
-            victimObj.mesh.rotation.z = THREE.MathUtils.lerp(0, Math.PI / 2, slashFactor);
-            victimObj.mesh.position.y = THREE.MathUtils.lerp(0.1, -0.2, slashFactor);
-            victimObj.mesh.scale.setScalar(Math.max(0.01, 0.9 * (1 - slashFactor)));
-          }
-
-          // Particles Fly Out
-          particles.forEach(p => {
-            p.mesh.position.addScaledVector(p.vel, 0.016);
-            p.vel.y -= 0.15; // Gravity
-            p.mesh.material.opacity = Math.max(0, 1.0 - slashFactor);
-          });
-        }
-      }
-      // Phase C: Camera Reset Back to Normal (0.70 to 1.0)
-      if (progress > 0.70) {
-        const resetFactor = (progress - 0.70) / 0.30;
-        this.camera.position.lerpVectors(cutsceneCamPos, origCamPos, resetFactor);
-        this.controls.target.lerpVectors(cutsceneTarget, origTarget, resetFactor);
-      }
-
-      this.controls.update();
-
-      if (progress < 1.0) {
-        requestAnimationFrame(animateCutsceneFrame);
-      } else {
-        // Cleanup VFX Mesh Objects
-        this.disposeObject(slashMesh);
-        this.vfxGroup.remove(slashMesh);
-        particles.forEach(p => {
-          this.disposeObject(p.mesh);
-          this.vfxGroup.remove(p.mesh);
-        });
-
-        this.camera.position.copy(origCamPos);
-        this.controls.target.copy(origTarget);
-        this.controls.update();
-
-        this.isAnimatingCutscene = false;
-        if (onComplete) onComplete();
-      }
-    };
-
-    requestAnimationFrame(animateCutsceneFrame);
+  triggerCaptureCutscene(attackerType, fromR, fromC, toR, toC, onComplete) {
+    this.attackManager.triggerPieceAttack(attackerType, fromR, fromC, toR, toC, onComplete);
   }
 
   renderValidMoveMarkers(validMoves, boardState) {
