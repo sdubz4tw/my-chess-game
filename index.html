@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity 3D Chess - Piece-Specific Attack FX Edition</title>
+  <title>Apple Chess 3D Baseline</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -98,7 +98,7 @@
       z-index: 1;
     }
 
-    /* UI Overlay Panel */
+    /* HUD Interface */
     .hud {
       position: relative;
       z-index: 10;
@@ -485,10 +485,6 @@
       margin-bottom: 0.5rem;
     }
 
-    .highlight {
-      background-color: rgba(76, 175, 80, 0.4) !important;
-    }
-
     @media (max-width: 768px) {
       .hud-header { flex-direction: column; gap: 0.75rem; }
       .sidebar { width: 100%; }
@@ -506,11 +502,11 @@
     <div class="hud-header">
       <div class="brand">
         <img id="brandIcon" src="assets/donkey_knight.png" alt="Donkey Knight">
-        <h1>Piece Attack FX 3D Chess</h1>
+        <h1>Apple Chess 3D</h1>
       </div>
 
       <div class="controls-top">
-        <button id="btnAdmin" class="btn btn-primary" style="gap: 0.4rem; display: flex; align-items: center;">⚙️ Admin Customizer</button>
+        <button id="btnAdmin" class="btn btn-primary" style="gap: 0.4rem; display: flex; align-items: center;">⚙️ Customizer</button>
 
         <select id="boardTheme" class="select-input">
           <option value="woodcut" selected>Vintage Engraved Woodcut (3D)</option>
@@ -620,19 +616,11 @@
     </div>
   </div>
 
-  <!-- MODULAR JS ENTRYPOINT -->
+  <!-- CLEAN MODULE IMPORTS -->
   <script type="module">
-    import { ChessEngine } from './js/engine.js';
-    import { Scene3D } from './js/scene3d.js';
-    import { 
-      dataUrlDonkey, 
-      setCustomPieceImage, 
-      setCustomPieceModel, 
-      clearCustomPiece, 
-      clearAllCustomizations,
-      customPieceTextures,
-      customPieceModels
-    } from './js/pieces3d.js';
+    import { ChessLogic } from './js/chessLogic.js';
+    import { Scene } from './js/scene.js';
+    import { AdminPortal } from './js/adminPortal.js';
 
     const PIECES_SVG = {
       'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
@@ -649,13 +637,9 @@
       'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
     };
 
-    const PIECE_NAMES = {
-      'P': 'White Pawn', 'N': 'White Knight', 'B': 'White Bishop', 'R': 'White Rook', 'Q': 'White Queen', 'K': 'White King',
-      'p': 'Black Pawn', 'n': 'Black Knight', 'b': 'Black Bishop', 'r': 'Black Rook', 'q': 'Black Queen', 'k': 'Black King'
-    };
-
-    let engine = new ChessEngine();
-    let scene3d = null;
+    let engine = new ChessLogic();
+    let scene = null;
+    let adminPortal = null;
     let selectedSquare = null;
     let validMoves = [];
     let pendingPromotion = null;
@@ -663,19 +647,19 @@
     let gameMode = 'ai-medium';
 
     function initApp() {
-      scene3d = new Scene3D('canvas-container', handleSquareClicked);
+      scene = new Scene('canvas-container', handleSquareClicked);
+      adminPortal = new AdminPortal(scene, () => updateHUD());
       setupEventListeners();
-      buildAdminGrid();
       startNewGame();
     }
 
     function setupEventListeners() {
       document.getElementById('boardTheme').addEventListener('change', (e) => {
         document.body.setAttribute('data-theme', e.target.value);
-        scene3d.applyThemeMaterials(e.target.value);
-        scene3d.buildBoard3D();
-        scene3d.updatePieces(engine.board);
-        scene3d.renderValidMoveMarkers(validMoves, engine.board);
+        scene.applyThemeMaterials(e.target.value);
+        scene.buildBoard3D();
+        scene.updatePieces(engine.board);
+        scene.renderValidMoveMarkers(validMoves, engine.board);
       });
 
       document.getElementById('gameMode').addEventListener('change', (e) => {
@@ -685,8 +669,8 @@
 
       document.getElementById('playerSide').addEventListener('change', (e) => {
         userSide = e.target.value;
-        if (userSide === 'black') scene3d.setCameraView('flip');
-        else scene3d.setCameraView('perspective');
+        if (userSide === 'black') scene.setCameraView('flip');
+        else scene.setCameraView('perspective');
         startNewGame();
       });
 
@@ -696,26 +680,9 @@
         startNewGame();
       });
 
-      document.getElementById('btnAdmin').addEventListener('click', () => {
-        buildAdminGrid();
-        document.getElementById('adminModal').style.display = 'flex';
-      });
-      document.getElementById('btnCloseAdmin').addEventListener('click', () => {
-        document.getElementById('adminModal').style.display = 'none';
-      });
-      document.getElementById('btnSaveAdmin').addEventListener('click', () => {
-        document.getElementById('adminModal').style.display = 'none';
-      });
-      document.getElementById('btnResetAllCustom').addEventListener('click', () => {
-        clearAllCustomizations();
-        scene3d.updatePieces(engine.board);
-        buildAdminGrid();
-        updateHUD();
-      });
-
-      document.getElementById('btnCamPerspective').addEventListener('click', () => scene3d.setCameraView('perspective'));
-      document.getElementById('btnCamTop').addEventListener('click', () => scene3d.setCameraView('top'));
-      document.getElementById('btnCamFlip').addEventListener('click', () => scene3d.setCameraView('flip'));
+      document.getElementById('btnCamPerspective').addEventListener('click', () => scene.setCameraView('perspective'));
+      document.getElementById('btnCamTop').addEventListener('click', () => scene.setCameraView('top'));
+      document.getElementById('btnCamFlip').addEventListener('click', () => scene.setCameraView('flip'));
 
       document.querySelectorAll('.promo-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -730,109 +697,6 @@
       });
     }
 
-    function buildAdminGrid() {
-      const grid = document.getElementById('adminGrid');
-      grid.innerHTML = '';
-
-      Object.keys(PIECE_NAMES).forEach(pieceType => {
-        const hasCustomImg = !!localStorage.getItem(`custom_piece_img_${pieceType}`);
-        const hasCustomModel = !!customPieceModels[pieceType];
-
-        let statusText = 'Default';
-        if (hasCustomModel) statusText = 'Custom 3D Model';
-        else if (hasCustomImg) statusText = 'Custom Image';
-
-        const card = document.createElement('div');
-        card.className = 'admin-card';
-        card.innerHTML = `
-          <div class="admin-card-header">
-            <div class="admin-card-title">
-              <img src="${PIECES_SVG[pieceType]}" alt="${pieceType}">
-              <span>${PIECE_NAMES[pieceType]}</span>
-            </div>
-            <span class="status-tag">${statusText}</span>
-          </div>
-
-          <label class="admin-file-label">
-            📁 Upload JPEG/PNG or 3D (.gltf, .obj)
-            <input type="file" class="admin-file-input" data-piece="${pieceType}" accept="image/*,.gltf,.glb,.obj">
-          </label>
-
-          ${(hasCustomImg || hasCustomModel) ? `<button class="btn btn-reset-piece" data-piece="${pieceType}" style="font-size:0.75rem; padding:0.25rem; color:#dc2626;">Clear Customization</button>` : ''}
-        `;
-
-        grid.appendChild(card);
-      });
-
-      grid.querySelectorAll('.admin-file-input').forEach(input => {
-        input.addEventListener('change', handleAdminFileUpload);
-      });
-
-      grid.querySelectorAll('.btn-reset-piece').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const pt = e.target.getAttribute('data-piece');
-          clearCustomPiece(pt);
-          scene3d.updatePieces(engine.board);
-          buildAdminGrid();
-          updateHUD();
-        });
-      });
-    }
-
-    function handleAdminFileUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const pieceType = e.target.getAttribute('data-piece');
-      const ext = file.name.split('.').pop().toLowerCase();
-
-      if (['jpg', 'jpeg', 'png', 'webp', 'svg'].includes(ext)) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const dataUrl = ev.target.result;
-          setCustomPieceImage(pieceType, dataUrl);
-          scene3d.updatePieces(engine.board);
-          buildAdminGrid();
-          updateHUD();
-        };
-        reader.readAsDataURL(file);
-      } else if (['gltf', 'glb'].includes(ext)) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const loader = new THREE.GLTFLoader();
-          loader.parse(ev.target.result, '', (gltf) => {
-            const obj = gltf.scene || gltf.scenes[0];
-            const box = new THREE.Box3().setFromObject(obj);
-            const size = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 1.0 / maxDim;
-            obj.scale.set(scale, scale, scale);
-
-            setCustomPieceModel(pieceType, obj);
-            scene3d.updatePieces(engine.board);
-            buildAdminGrid();
-          });
-        };
-        reader.readAsArrayBuffer(file);
-      } else if (ext === 'obj') {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const loader = new THREE.OBJLoader();
-          const obj = loader.parse(ev.target.result);
-          const box = new THREE.Box3().setFromObject(obj);
-          const size = box.getSize(new THREE.Vector3());
-          const maxDim = Math.max(size.x, size.y, size.z);
-          const scale = 1.0 / maxDim;
-          obj.scale.set(scale, scale, scale);
-
-          setCustomPieceModel(pieceType, obj);
-          scene3d.updatePieces(engine.board);
-          buildAdminGrid();
-        };
-        reader.readAsText(file);
-      }
-    }
-
     function startNewGame() {
       engine.reset();
       selectedSquare = null;
@@ -843,10 +707,10 @@
       document.getElementById('promotionModal').style.display = 'none';
       document.getElementById('gameOverModal').style.display = 'none';
 
-      scene3d.updatePieces(engine.board);
-      scene3d.setHighlight(null, null);
-      scene3d.setCheckHighlight(null, null);
-      scene3d.renderValidMoveMarkers([], engine.board);
+      scene.updatePieces(engine.board);
+      scene.setHighlight(null, null);
+      scene.setCheckHighlight(null, null);
+      scene.renderValidMoveMarkers([], engine.board);
 
       updateHUD();
 
@@ -864,8 +728,8 @@
       if (clickedColor === engine.turn) {
         selectedSquare = { r, c };
         validMoves = engine.getLegalMoves(r, c);
-        scene3d.setHighlight(r, c);
-        scene3d.renderValidMoveMarkers(validMoves, engine.board);
+        scene.setHighlight(r, c);
+        scene.renderValidMoveMarkers(validMoves, engine.board);
         return;
       }
 
@@ -876,8 +740,8 @@
         } else {
           selectedSquare = null;
           validMoves = [];
-          scene3d.setHighlight(null, null);
-          scene3d.renderValidMoveMarkers([], engine.board);
+          scene.setHighlight(null, null);
+          scene.renderValidMoveMarkers([], engine.board);
         }
       }
     }
@@ -889,11 +753,13 @@
       const isCapture = !!target || isEP;
 
       if (isCapture && !promoChoice) {
-        scene3d.triggerCaptureCutscene(piece, fromR, fromC, toR, toC, () => {
+        scene.triggerCaptureCutscene(piece, fromR, fromC, toR, toC, () => {
           finishMoveExecution(fromR, fromC, toR, toC, promoChoice);
         });
       } else {
-        finishMoveExecution(fromR, fromC, toR, toC, promoChoice);
+        scene.animatePieceMove(fromR, fromC, toR, toC, () => {
+          finishMoveExecution(fromR, fromC, toR, toC, promoChoice);
+        });
       }
     }
 
@@ -918,9 +784,9 @@
 
       selectedSquare = null;
       validMoves = [];
-      scene3d.setHighlight(null, null);
-      scene3d.updatePieces(engine.board);
-      scene3d.renderValidMoveMarkers([], engine.board);
+      scene.setHighlight(null, null);
+      scene.updatePieces(engine.board);
+      scene.renderValidMoveMarkers([], engine.board);
 
       updateHUD();
       checkGameState();
@@ -938,10 +804,10 @@
       if (inCheck) {
         checkBadge.style.display = 'inline-block';
         const kingPos = engine.findKing(engine.turn);
-        if (kingPos) scene3d.setCheckHighlight(kingPos.r, kingPos.c);
+        if (kingPos) scene.setCheckHighlight(kingPos.r, kingPos.c);
       } else {
         checkBadge.style.display = 'none';
-        scene3d.setCheckHighlight(null, null);
+        scene.setCheckHighlight(null, null);
       }
 
       if (legalMoves.length === 0) {

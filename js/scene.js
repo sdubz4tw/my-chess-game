@@ -1,11 +1,11 @@
 /**
- * 3D Scene Setup, Lighting, OrbitControls, Memory Disposal, Raycasting, and Piece-Specific Attack Cutscenes
+ * Apple Chess 3D WebGL Renderer & Scene Controller
  */
 
 import { createWoodMaterials, build3DPieceMesh } from './pieces3d.js';
 import { AttackManager } from './attacks3d.js';
 
-export class Scene3D {
+export class Scene {
   constructor(containerId, onSquareClicked) {
     this.container = document.getElementById(containerId);
     this.onSquareClicked = onSquareClicked;
@@ -22,6 +22,7 @@ export class Scene3D {
     this.moveMarkers = [];
     this.highlightRing = null;
     this.checkRing = null;
+    this.currentBoardState = [];
 
     this.materials = null;
     this.themeMaterials = {};
@@ -36,6 +37,7 @@ export class Scene3D {
   init() {
     this.scene = new THREE.Scene();
 
+    // Apple Chess Camera Perspective
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     this.camera.position.set(0, 8.5, 9.5);
 
@@ -46,6 +48,7 @@ export class Scene3D {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.container.appendChild(this.renderer.domElement);
 
+    // Apple Chess OrbitControls
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
@@ -53,6 +56,7 @@ export class Scene3D {
     this.controls.minDistance = 4.5;
     this.controls.maxDistance = 20;
 
+    // Soft Directional & Ambient Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     this.scene.add(ambientLight);
 
@@ -73,11 +77,26 @@ export class Scene3D {
     this.applyThemeMaterials('woodcut');
     this.buildBoard3D();
     this.createSelectionHighlights();
+    this.createMarbleTableEnvironment();
 
     window.addEventListener('resize', () => this.onWindowResize());
     this.renderer.domElement.addEventListener('pointerdown', (e) => this.onPointerDown(e));
 
     this.animate();
+  }
+
+  createMarbleTableEnvironment() {
+    const tableGeo = new THREE.PlaneGeometry(60, 60);
+    const tableMat = new THREE.MeshStandardMaterial({
+      color: 0x1f1915,
+      roughness: 0.45,
+      metalness: 0.1
+    });
+    const tableMesh = new THREE.Mesh(tableGeo, tableMat);
+    tableMesh.rotation.x = -Math.PI / 2;
+    tableMesh.position.y = -0.45;
+    tableMesh.receiveShadow = true;
+    this.scene.add(tableMesh);
   }
 
   applyThemeMaterials(themeName) {
@@ -176,6 +195,7 @@ export class Scene3D {
   }
 
   updatePieces(boardState) {
+    this.currentBoardState = boardState;
     if (this.isAnimatingCutscene) return;
 
     this.pieceMeshes.forEach(p => {
@@ -201,8 +221,45 @@ export class Scene3D {
   }
 
   /**
-   * DELEGATE CUTSCENES TO ATTACK MANAGER
+   * SMOOTH PIECE SLIDING / LIFTING ANIMATION FOR NON-CAPTURE MOVES
    */
+  animatePieceMove(fromR, fromC, toR, toC, onComplete) {
+    const pieceObj = this.pieceMeshes.find(p => p.row === fromR && p.col === fromC);
+    if (!pieceObj) {
+      if (onComplete) onComplete();
+      return;
+    }
+
+    const startX = fromC - 3.5;
+    const startZ = fromR - 3.5;
+    const targetX = toC - 3.5;
+    const targetZ = toR - 3.5;
+
+    const startTime = performance.now();
+    const duration = 400; // 400ms smooth arc slide
+
+    const animateSlide = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1.0);
+      const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+      pieceObj.mesh.position.x = THREE.MathUtils.lerp(startX, targetX, ease);
+      pieceObj.mesh.position.z = THREE.MathUtils.lerp(startZ, targetZ, ease);
+      pieceObj.mesh.position.y = 0.1 + Math.sin(ease * Math.PI) * 0.45; // Subtle lift in air
+
+      if (progress < 1.0) {
+        requestAnimationFrame(animateSlide);
+      } else {
+        pieceObj.mesh.position.set(targetX, 0.1, targetZ);
+        pieceObj.row = toR;
+        pieceObj.col = toC;
+        if (onComplete) onComplete();
+      }
+    };
+
+    requestAnimationFrame(animateSlide);
+  }
+
   triggerCaptureCutscene(attackerType, fromR, fromC, toR, toC, onComplete) {
     this.attackManager.triggerPieceAttack(attackerType, fromR, fromC, toR, toC, onComplete);
   }
