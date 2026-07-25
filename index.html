@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity 3D Chess - Vintage Edition</title>
+  <title>Antigravity 3D Chess - Staunton Wood Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
   <style>
     :root {
       --bg-gradient: radial-gradient(circle at 50% 30%, #f4efe6 0%, #dcd0bc 100%);
-      --hud-bg: rgba(245, 240, 232, 0.82);
+      --hud-bg: rgba(245, 240, 232, 0.85);
       --hud-border: rgba(60, 45, 30, 0.15);
       --accent: #8b5a2b;
       --accent-hover: #6e441f;
@@ -199,14 +199,14 @@
       width: 14px;
       height: 14px;
       border-radius: 50%;
-      background: #f5f0eb;
+      background: #e8d5b5;
       border: 1px solid #78716c;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
       transition: background 0.3s;
     }
 
     .turn-badge.black {
-      background: #211c1d;
+      background: #5a301c;
       border: 1px solid #78716c;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
     }
@@ -384,12 +384,12 @@
     <div class="hud-header">
       <div class="brand">
         <span style="font-size: 1.6rem;">♟️</span>
-        <h1>Chess Pieces</h1>
+        <h1>Staunton Chess</h1>
       </div>
 
       <div class="controls-top">
         <select id="boardTheme" class="select-input" onchange="changeTheme()">
-          <option value="vintage" selected>Vintage Staunton (Poster Theme)</option>
+          <option value="vintage" selected>Natural Boxwood & Rosewood (Image)</option>
           <option value="porcelain">Cobalt Porcelain (Blue)</option>
           <option value="cyber">Midnight Cyber (Dark)</option>
         </select>
@@ -512,11 +512,14 @@
     let moveMarkers = [];
     let raycaster, mouse;
 
-    // THEME MATERIALS (Vintage Staunton default based on reference poster)
+    // THEME MATERIALS (Matching attached Staunton Boxwood & Rosewood reference image)
     let matLightSquare, matDarkSquare, matFrame, matFrameGold;
     let matWhitePiece, matBlackPiece, matWhiteAccent, matBlackAccent;
+    let matFeltBase;
 
     function applyThemeMaterials(themeName) {
+      matFeltBase = new THREE.MeshStandardMaterial({ color: 0x1b4d2e, roughness: 0.8 }); // Green Felt Base Pad
+
       if (themeName === 'porcelain') {
         matLightSquare = new THREE.MeshStandardMaterial({ color: 0xedd6b1, roughness: 0.35 });
         matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.4 });
@@ -538,15 +541,28 @@
         matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.2, metalness: 0.9 });
         if (scene) scene.background = new THREE.Color(0x020617);
       } else {
-        // 'vintage' - Authentic Vintage Staunton Poster Theme
-        matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf2e6ce, roughness: 0.35 }); // Cream Maple
-        matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.4 });  // Vintage Walnut
+        // 'vintage' - Authentic Staunton Natural Boxwood & Stained Rosewood (Matching exact reference image)
+        matLightSquare = new THREE.MeshStandardMaterial({ color: 0xf2e6ce, roughness: 0.35 }); // Natural Light Maple
+        matDarkSquare = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.4 });  // Rich Walnut
         matFrame = new THREE.MeshStandardMaterial({ color: 0x4a301c, roughness: 0.35 });      // Oak Frame
-        matFrameGold = new THREE.MeshStandardMaterial({ color: 0xc69214, roughness: 0.3, metalness: 0.7 }); // Brass Trim
-        matWhitePiece = new THREE.MeshStandardMaterial({ color: 0xf7f2ea, roughness: 0.25, metalness: 0.05 }); // Ivory Bone
-        matBlackPiece = new THREE.MeshStandardMaterial({ color: 0x26201e, roughness: 0.25, metalness: 0.1 });  // Deep Ebony
-        matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.7 });
-        matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x78716c, roughness: 0.3, metalness: 0.4 });
+        matFrameGold = new THREE.MeshStandardMaterial({ color: 0xc69214, roughness: 0.3, metalness: 0.7 });
+
+        // White Set: Natural Boxwood Light Maple (Matching top row in image)
+        matWhitePiece = new THREE.MeshStandardMaterial({
+          color: 0xe8d5b5,
+          roughness: 0.32,
+          metalness: 0.04
+        });
+
+        // Black Set: Stained Dark Rosewood / Mahogany (Matching bottom row in image)
+        matBlackPiece = new THREE.MeshStandardMaterial({
+          color: 0x5a301c,
+          roughness: 0.35,
+          metalness: 0.08
+        });
+
+        matWhiteAccent = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.6 });
+        matBlackAccent = new THREE.MeshStandardMaterial({ color: 0x3d2012, roughness: 0.3, metalness: 0.2 });
         if (scene) scene.background = new THREE.Color(0xdcd0bc);
       }
     }
@@ -602,7 +618,6 @@
     }
 
     function buildBoard3D() {
-      // Clear existing board elements if any
       const existingFrame = scene.getObjectByName("boardFrame");
       if (existingFrame) scene.remove(existingFrame);
 
@@ -638,6 +653,7 @@
       scene.add(boardGroup);
     }
 
+    // Exact Staunton piece profiles matching the reference image
     function createPieceMesh(type) {
       const isWhite = type === type.toUpperCase();
       const pieceMat = isWhite ? matWhitePiece : matBlackPiece;
@@ -648,102 +664,125 @@
 
       let points = [];
 
-      if (lowerType === 'p') {
+      if (lowerType === 'p') { // Pawn
         points = [
           new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.32, 0.05),
-          new THREE.Vector2(0.28, 0.12),
+          new THREE.Vector2(0.35, 0.05),
+          new THREE.Vector2(0.30, 0.12),
           new THREE.Vector2(0.18, 0.35),
-          new THREE.Vector2(0.14, 0.48),
-          new THREE.Vector2(0.2, 0.52),
-          new THREE.Vector2(0.18, 0.55),
-          new THREE.Vector2(0, 0.8)
+          new THREE.Vector2(0.15, 0.48),
+          new THREE.Vector2(0.22, 0.52),
+          new THREE.Vector2(0.18, 0.56),
+          new THREE.Vector2(0, 0.85)
         ];
-      } else if (lowerType === 'r') {
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.36, 0.06),
-          new THREE.Vector2(0.3, 0.15),
-          new THREE.Vector2(0.24, 0.6),
-          new THREE.Vector2(0.32, 0.72),
-          new THREE.Vector2(0.32, 0.95),
-          new THREE.Vector2(0, 0.95)
-        ];
-      } else if (lowerType === 'n') {
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.36, 0.06),
-          new THREE.Vector2(0.3, 0.15),
-          new THREE.Vector2(0.2, 0.45),
-          new THREE.Vector2(0.24, 0.52),
-          new THREE.Vector2(0, 0.55)
-        ];
-      } else if (lowerType === 'b') {
-        points = [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.36, 0.06),
-          new THREE.Vector2(0.3, 0.15),
-          new THREE.Vector2(0.18, 0.65),
-          new THREE.Vector2(0.26, 0.75),
-          new THREE.Vector2(0.2, 0.95),
-          new THREE.Vector2(0.06, 1.08),
-          new THREE.Vector2(0, 1.15)
-        ];
-      } else if (lowerType === 'q') {
+      } else if (lowerType === 'r') { // Rook
         points = [
           new THREE.Vector2(0, 0),
           new THREE.Vector2(0.38, 0.06),
           new THREE.Vector2(0.32, 0.15),
-          new THREE.Vector2(0.2, 0.75),
-          new THREE.Vector2(0.34, 0.95),
-          new THREE.Vector2(0.3, 1.22),
-          new THREE.Vector2(0.08, 1.3),
-          new THREE.Vector2(0, 1.35)
+          new THREE.Vector2(0.24, 0.65),
+          new THREE.Vector2(0.33, 0.76),
+          new THREE.Vector2(0.33, 0.98),
+          new THREE.Vector2(0, 0.98)
         ];
-      } else if (lowerType === 'k') {
+      } else if (lowerType === 'n') { // Knight
         points = [
           new THREE.Vector2(0, 0),
-          new THREE.Vector2(0.4, 0.06),
+          new THREE.Vector2(0.38, 0.06),
+          new THREE.Vector2(0.32, 0.15),
+          new THREE.Vector2(0.22, 0.45),
+          new THREE.Vector2(0.26, 0.52),
+          new THREE.Vector2(0, 0.55)
+        ];
+      } else if (lowerType === 'b') { // Bishop
+        points = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.38, 0.06),
+          new THREE.Vector2(0.32, 0.15),
+          new THREE.Vector2(0.19, 0.65),
+          new THREE.Vector2(0.28, 0.75),
+          new THREE.Vector2(0.22, 0.96),
+          new THREE.Vector2(0.08, 1.10),
+          new THREE.Vector2(0, 1.18)
+        ];
+      } else if (lowerType === 'q') { // Queen
+        points = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.40, 0.06),
           new THREE.Vector2(0.34, 0.15),
-          new THREE.Vector2(0.22, 0.8),
-          new THREE.Vector2(0.35, 1.05),
-          new THREE.Vector2(0.28, 1.3),
-          new THREE.Vector2(0, 1.35)
+          new THREE.Vector2(0.21, 0.75),
+          new THREE.Vector2(0.35, 0.96),
+          new THREE.Vector2(0.31, 1.25),
+          new THREE.Vector2(0.08, 1.32),
+          new THREE.Vector2(0, 1.38)
+        ];
+      } else if (lowerType === 'k') { // King
+        points = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.42, 0.06),
+          new THREE.Vector2(0.35, 0.15),
+          new THREE.Vector2(0.23, 0.8),
+          new THREE.Vector2(0.36, 1.05),
+          new THREE.Vector2(0.30, 1.32),
+          new THREE.Vector2(0, 1.38)
         ];
       }
 
+      // 1. Green Felt Base Pad (Exact Staunton detail from reference image)
+      const feltGeo = new THREE.CylinderGeometry(points[1].x * 0.98, points[1].x * 0.98, 0.04, 24);
+      const feltMesh = new THREE.Mesh(feltGeo, matFeltBase);
+      feltMesh.position.y = -0.02;
+      group.add(feltMesh);
+
+      // 2. Main Lathe Body
       const latheGeo = new THREE.LatheGeometry(points, 24);
       const mainMesh = new THREE.Mesh(latheGeo, pieceMat);
       mainMesh.castShadow = true;
       mainMesh.receiveShadow = true;
       group.add(mainMesh);
 
-      const ringGeo = new THREE.TorusGeometry(points[2].x * 0.9, 0.03, 12, 24);
+      // 3. Waist Collar Accent Ring
+      const ringGeo = new THREE.TorusGeometry(points[2].x * 0.9, 0.025, 12, 24);
       const ringMesh = new THREE.Mesh(ringGeo, accentMat);
       ringMesh.rotation.x = Math.PI / 2;
       ringMesh.position.y = points[2].y;
       group.add(ringMesh);
 
-      if (lowerType === 'k') {
-        const crossH = new THREE.BoxGeometry(0.22, 0.06, 0.06);
-        const crossV = new THREE.BoxGeometry(0.06, 0.22, 0.06);
-        const c1 = new THREE.Mesh(crossH, accentMat);
-        const c2 = new THREE.Mesh(crossV, accentMat);
-        c1.position.y = 1.45;
-        c2.position.y = 1.45;
+      // 4. Detailed Finials & Head Shapes (Matching image)
+      if (lowerType === 'k') { // King Formée Cross Finial
+        const crossH = new THREE.BoxGeometry(0.24, 0.07, 0.07);
+        const crossV = new THREE.BoxGeometry(0.07, 0.24, 0.07);
+        const c1 = new THREE.Mesh(crossH, pieceMat);
+        const c2 = new THREE.Mesh(crossV, pieceMat);
+        c1.position.y = 1.48;
+        c2.position.y = 1.48;
+        c1.castShadow = true;
+        c2.castShadow = true;
         group.add(c1);
         group.add(c2);
-      } else if (lowerType === 'n') {
-        const headGeo = new THREE.BoxGeometry(0.24, 0.45, 0.38);
+      } else if (lowerType === 'q') { // Queen Coronet Ball Finial
+        const ballGeo = new THREE.SphereGeometry(0.09, 16, 16);
+        const ballMesh = new THREE.Mesh(ballGeo, pieceMat);
+        ballMesh.position.y = 1.42;
+        ballMesh.castShadow = true;
+        group.add(ballMesh);
+      } else if (lowerType === 'b') { // Bishop Slit & Finial Ball
+        const ballGeo = new THREE.SphereGeometry(0.075, 16, 16);
+        const ballMesh = new THREE.Mesh(ballGeo, pieceMat);
+        ballMesh.position.y = 1.22;
+        ballMesh.castShadow = true;
+        group.add(ballMesh);
+      } else if (lowerType === 'n') { // Knight Horse Head Sculpt
+        const headGeo = new THREE.BoxGeometry(0.24, 0.46, 0.38);
         const headMesh = new THREE.Mesh(headGeo, pieceMat);
         headMesh.position.set(0, 0.72, 0.06);
         headMesh.rotation.x = 0.2;
         headMesh.castShadow = true;
         group.add(headMesh);
-      } else if (lowerType === 'r') {
-        const crownGeo = new THREE.CylinderGeometry(0.33, 0.3, 0.2, 8);
+      } else if (lowerType === 'r') { // Rook Castle Battlements
+        const crownGeo = new THREE.CylinderGeometry(0.34, 0.31, 0.22, 8);
         const crownMesh = new THREE.Mesh(crownGeo, pieceMat);
-        crownMesh.position.y = 1.0;
+        crownMesh.position.y = 1.02;
         crownMesh.castShadow = true;
         group.add(crownMesh);
       }
@@ -1002,7 +1041,6 @@
       const target = boardState[toR][toC];
       const isWhite = isWhitePiece(piece);
 
-      // Pawn Promotion UI Trigger
       if (piece.toLowerCase() === 'p' && (toR === 0 || toR === 7) && !promotionChoice) {
         if (currentTurn === userSide || gameMode === 'pvp') {
           pendingPromotion = { fromR, fromC, toR, toC };
@@ -1013,13 +1051,11 @@
         }
       }
 
-      // Captures
       if (target) {
         if (isWhitePiece(target)) capturedWhite.push(target);
         else capturedBlack.push(target);
       }
 
-      // En Passant Capture Removal
       const isEP = piece.toLowerCase() === 'p' && enPassantTarget && toR === enPassantTarget.r && toC === enPassantTarget.c;
       if (isEP) {
         const epPawn = boardState[fromR][toC];
@@ -1030,7 +1066,6 @@
         boardState[fromR][toC] = '';
       }
 
-      // Castling Rook Relocation
       if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
         if (toC === 6) {
           boardState[fromR][5] = boardState[fromR][7];
@@ -1048,18 +1083,15 @@
         moveHistory.push(`${pieceSym}${files[fromC]}${8-fromR}${capSym}${files[toC]}${8-toR}`);
       }
 
-      // Move Main Piece
       boardState[toR][toC] = promotionChoice ? (isWhite ? promotionChoice.toUpperCase() : promotionChoice.toLowerCase()) : piece;
       boardState[fromR][fromC] = '';
 
-      // Update En Passant Target for NEXT turn
       if (piece.toLowerCase() === 'p' && Math.abs(toR - fromR) === 2) {
         enPassantTarget = { r: (fromR + toR) / 2, c: fromC };
       } else {
         enPassantTarget = null;
       }
 
-      // Update HasMoved Tracking
       if (piece === 'K') hasMoved.whiteKing = true;
       if (piece === 'k') hasMoved.blackKing = true;
       if (piece === 'R' && fromR === 7 && fromC === 7) hasMoved.whiteRookK = true;
@@ -1067,7 +1099,6 @@
       if (piece === 'r' && fromR === 0 && fromC === 7) hasMoved.blackRookK = true;
       if (piece === 'r' && fromR === 0 && fromC === 0) hasMoved.blackRookQ = true;
 
-      // Switch Turn
       currentTurn = currentTurn === 'white' ? 'black' : 'white';
       selectedSquare = null;
       validMoves = [];
