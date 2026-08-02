@@ -1,12 +1,11 @@
 /**
- * FIDE Chess Engine & Minimax Computer AI
+ * Strict FIDE Chess Engine & Minimax Computer AI
  */
 
 export class ChessLogic {
   constructor() {
     this.board = [];
     this.turn = 'white';
-    this.history = [];
     this.moveHistory = [];
     this.capturedWhite = [];
     this.capturedBlack = [];
@@ -33,7 +32,6 @@ export class ChessLogic {
     ];
 
     this.turn = 'white';
-    this.history = [];
     this.moveHistory = [];
     this.capturedWhite = [];
     this.capturedBlack = [];
@@ -122,7 +120,7 @@ export class ChessLogic {
       const dirs = [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]];
       dirs.forEach(([dr, dc]) => addMove(r + dr, c + dc));
 
-      // Castling
+      // FIDE Castling Rules Validation
       if (color === 'white' && r === 7 && c === 4 && !this.castlingRights.whiteKingMoved) {
         if (!this.castlingRights.whiteRookKMoved && board[7][5] === '' && board[7][6] === '' && board[7][7] === 'R') {
           if (!this.isSquareAttacked(7, 4, 'black') && !this.isSquareAttacked(7, 5, 'black') && !this.isSquareAttacked(7, 6, 'black')) {
@@ -211,6 +209,36 @@ export class ChessLogic {
     return moves;
   }
 
+  hasInsufficientMaterial() {
+    let pieces = [];
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const p = this.board[r][c];
+        if (p) pieces.push({ type: p.toLowerCase(), color: this.getPieceColor(p), squareColor: (r + c) % 2 });
+      }
+    }
+
+    if (pieces.length === 2) return true; // King vs King
+
+    if (pieces.length === 3) {
+      const nonKings = pieces.filter(p => p.type !== 'k');
+      if (nonKings.length === 1 && (nonKings[0].type === 'b' || nonKings[0].type === 'n')) {
+        return true; // King + Bishop/Knight vs King
+      }
+    }
+
+    if (pieces.length === 4) {
+      const bishops = pieces.filter(p => p.type === 'b');
+      if (bishops.length === 2 && bishops[0].color !== bishops[1].color) {
+        if (bishops[0].squareColor === bishops[1].squareColor) {
+          return true; // King + Bishop vs King + Bishop (Same Square Color)
+        }
+      }
+    }
+
+    return false;
+  }
+
   executeMove(fromR, fromC, toR, toC, promotionChoice = null) {
     const piece = this.board[fromR][fromC];
     if (!piece) return null;
@@ -241,7 +269,7 @@ export class ChessLogic {
     this.board[toR][toC] = (promotionChoice) ? promotionChoice : piece;
     this.board[fromR][fromC] = '';
 
-    // En Passant Target Setting
+    // En Passant Target Setting (only valid for 1 turn right after 2-square pawn jump)
     if (piece.toLowerCase() === 'p' && Math.abs(toR - fromR) === 2) {
       this.enPassantTarget = { r: (fromR + toR) / 2, c: fromC };
     } else {
@@ -250,10 +278,10 @@ export class ChessLogic {
 
     // Castling Rook Movement
     if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
-      if (toC === 6) { // Kingside
+      if (toC === 6) { // Kingside O-O
         this.board[toR][5] = this.board[toR][7];
         this.board[toR][7] = '';
-      } else if (toC === 2) { // Queenside
+      } else if (toC === 2) { // Queenside O-O-O
         this.board[toR][3] = this.board[toR][0];
         this.board[toR][0] = '';
       }
@@ -267,7 +295,7 @@ export class ChessLogic {
     if (fromR === 0 && fromC === 7) this.castlingRights.blackRookKMoved = true;
     if (fromR === 0 && fromC === 0) this.castlingRights.blackRookQMoved = true;
 
-    // Record Move History
+    // Move Record
     const colNames = ['a','b','c','d','e','f','g','h'];
     const notation = `${piece.toUpperCase() !== 'P' ? piece.toUpperCase() : ''}${colNames[toC]}${8 - toR}`;
     this.moveHistory.push({ piece, fromR, fromC, toR, toC, notation, captured });

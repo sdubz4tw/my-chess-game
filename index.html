@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apple Chess 3D - Hard Reset Edition</title>
+  <title>Apple Chess 3D Baseline - FIDE Grandmaster Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -770,20 +770,9 @@
     }
 
     function executeMove(fromR, fromC, toR, toC, promoChoice = null) {
-      const piece = engine.board[fromR][fromC];
-      const target = engine.board[toR][toC];
-      const isEP = piece.toLowerCase() === 'p' && engine.enPassantTarget && toR === engine.enPassantTarget.r && toC === engine.enPassantTarget.c;
-      const isCapture = !!target || isEP;
-
-      if (isCapture && !promoChoice) {
-        scene.triggerCaptureCutscene(piece, fromR, fromC, toR, toC, () => {
-          finishMoveExecution(fromR, fromC, toR, toC, promoChoice);
-        });
-      } else {
-        scene.animatePieceMove(fromR, fromC, toR, toC, () => {
-          finishMoveExecution(fromR, fromC, toR, toC, promoChoice);
-        });
-      }
+      scene.animatePieceMove(fromR, fromC, toR, toC, () => {
+        finishMoveExecution(fromR, fromC, toR, toC, promoChoice);
+      });
     }
 
     function finishMoveExecution(fromR, fromC, toR, toC, promoChoice) {
@@ -848,6 +837,15 @@
           msgEl.textContent = 'No legal moves remaining.';
         }
 
+        gameOverModal.style.display = 'flex';
+      } else if (engine.hasInsufficientMaterial()) {
+        engine.isGameOver = true;
+        const gameOverModal = document.getElementById('gameOverModal');
+        const titleEl = document.getElementById('gameOverTitle');
+        const msgEl = document.getElementById('gameOverMsg');
+
+        titleEl.textContent = 'Draw!';
+        msgEl.textContent = 'Draw by Insufficient Material.';
         gameOverModal.style.display = 'flex';
       }
     }

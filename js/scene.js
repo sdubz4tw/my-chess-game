@@ -1,9 +1,8 @@
 /**
- * Apple Chess 3D WebGL Renderer & Scene Controller
+ * Apple Chess 3D WebGL Renderer & Scene Controller (Instant & Clean Still Captures)
  */
 
 import { createWoodMaterials, build3DPieceMesh } from './pieces3d.js';
-import { AttackManager } from './attacks3d.js';
 
 export class Scene {
   constructor(containerId, onSquareClicked) {
@@ -28,8 +27,7 @@ export class Scene {
     this.themeMaterials = {};
     this.currentTheme = 'woodcut';
 
-    this.isAnimatingCutscene = false;
-    this.attackManager = new AttackManager(this);
+    this.isAnimating = false;
 
     this.init();
   }
@@ -37,7 +35,7 @@ export class Scene {
   init() {
     this.scene = new THREE.Scene();
 
-    // Apple Chess Camera Perspective
+    // Apple Chess 3D Perspective
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     this.camera.position.set(0, 8.5, 9.5);
 
@@ -48,7 +46,7 @@ export class Scene {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.container.appendChild(this.renderer.domElement);
 
-    // Apple Chess OrbitControls
+    // Smooth OrbitControls
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
@@ -56,7 +54,7 @@ export class Scene {
     this.controls.minDistance = 4.5;
     this.controls.maxDistance = 20;
 
-    // Soft Directional & Ambient Lighting
+    // Ambient & Soft Shadow Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     this.scene.add(ambientLight);
 
@@ -196,7 +194,7 @@ export class Scene {
 
   updatePieces(boardState) {
     this.currentBoardState = boardState;
-    if (this.isAnimatingCutscene) return;
+    if (this.isAnimating) return;
 
     this.pieceMeshes.forEach(p => {
       this.disposeObject(p.mesh);
@@ -221,13 +219,24 @@ export class Scene {
   }
 
   /**
-   * SMOOTH PIECE SLIDING / LIFTING ANIMATION FOR NON-CAPTURE MOVES
+   * CLEAN STILL CAPTURE & SLIDE ANIMATION (No cutscenes, no slash arcs, no particle explosions)
    */
   animatePieceMove(fromR, fromC, toR, toC, onComplete) {
     const pieceObj = this.pieceMeshes.find(p => p.row === fromR && p.col === fromC);
+    const victimObj = this.pieceMeshes.find(p => p.row === toR && p.col === toC);
+
     if (!pieceObj) {
       if (onComplete) onComplete();
       return;
+    }
+
+    this.isAnimating = true;
+
+    // Immediately remove captured piece from board if present
+    if (victimObj) {
+      this.disposeObject(victimObj.mesh);
+      this.scene.remove(victimObj.mesh);
+      this.pieceMeshes = this.pieceMeshes.filter(p => p !== victimObj);
     }
 
     const startX = fromC - 3.5;
@@ -236,7 +245,7 @@ export class Scene {
     const targetZ = toR - 3.5;
 
     const startTime = performance.now();
-    const duration = 400; // 400ms smooth arc slide
+    const duration = 280; // Fast, crisp 280ms slide
 
     const animateSlide = (now) => {
       const elapsed = now - startTime;
@@ -245,7 +254,7 @@ export class Scene {
 
       pieceObj.mesh.position.x = THREE.MathUtils.lerp(startX, targetX, ease);
       pieceObj.mesh.position.z = THREE.MathUtils.lerp(startZ, targetZ, ease);
-      pieceObj.mesh.position.y = 0.1 + Math.sin(ease * Math.PI) * 0.45; // Subtle lift in air
+      pieceObj.mesh.position.y = 0.1 + Math.sin(ease * Math.PI) * 0.25;
 
       if (progress < 1.0) {
         requestAnimationFrame(animateSlide);
@@ -253,15 +262,12 @@ export class Scene {
         pieceObj.mesh.position.set(targetX, 0.1, targetZ);
         pieceObj.row = toR;
         pieceObj.col = toC;
+        this.isAnimating = false;
         if (onComplete) onComplete();
       }
     };
 
     requestAnimationFrame(animateSlide);
-  }
-
-  triggerCaptureCutscene(attackerType, fromR, fromC, toR, toC, onComplete) {
-    this.attackManager.triggerPieceAttack(attackerType, fromR, fromC, toR, toC, onComplete);
   }
 
   renderValidMoveMarkers(validMoves, boardState) {
@@ -311,7 +317,7 @@ export class Scene {
   }
 
   setCameraView(view) {
-    if (this.isAnimatingCutscene) return;
+    if (this.isAnimating) return;
     if (view === 'perspective') {
       this.camera.position.set(0, 8.5, 9.5);
     } else if (view === 'top') {
@@ -325,7 +331,7 @@ export class Scene {
   }
 
   onPointerDown(event) {
-    if (this.isAnimatingCutscene) return;
+    if (this.isAnimating) return;
     this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
