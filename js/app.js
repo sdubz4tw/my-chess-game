@@ -16,7 +16,7 @@ const PIECES_SVG = {
   'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
   'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
   'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-  'n': 'https://upload.wikimedia.org/wikipedia/commons/ef/ef2/Chess_ndt45.svg',
+  'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
   'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
 };
 
@@ -32,7 +32,7 @@ export class ChessApp {
     this.gameMode = 'ai-medium';
     this.userSide = 'w';
     this.pendingPromotion = null;
-    this.lastMove = null; // { from, to }
+    this.lastMove = null;
 
     this.capturedWhite = [];
     this.capturedBlack = [];
@@ -120,17 +120,14 @@ export class ChessApp {
         sqDiv.className = `sq ${isLight ? 'light' : 'dark'}`;
         sqDiv.dataset.sq = sqName;
 
-        // Selection Highlight
         if (this.selectedSq === sqName) {
           sqDiv.classList.add('selected');
         }
 
-        // Move Trail Highlights
         if (this.lastMove && (this.lastMove.from === sqName || this.lastMove.to === sqName)) {
           sqDiv.classList.add('last-move');
         }
 
-        // Legal Move Dot / Ring
         const legalMove = this.legalMoves.find(m => m.to === sqName);
         if (legalMove) {
           const dot = document.createElement('div');
@@ -138,7 +135,6 @@ export class ChessApp {
           sqDiv.appendChild(dot);
         }
 
-        // Check Highlight
         if (this.game.in_check()) {
           const pieceOnSq = boardState[7 - r][c];
           if (pieceOnSq && pieceOnSq.type.toUpperCase() === 'K' && pieceOnSq.color === this.game.turn()) {
@@ -146,7 +142,6 @@ export class ChessApp {
           }
         }
 
-        // Render Piece Image
         const piece = boardState[7 - r][c];
         if (piece) {
           const pieceSymbol = piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase();
@@ -231,7 +226,6 @@ export class ChessApp {
   }
 
   makeMove(from, to, promotion = 'q') {
-    const targetPieceBefore = this.game.get(to);
     const move = this.game.move({ from, to, promotion });
 
     if (move) {
@@ -242,7 +236,6 @@ export class ChessApp {
         if (move.color === 'w') this.capturedBlack.push(capSymbol);
         else this.capturedWhite.push(capSymbol);
 
-        // Screen Shake for Heavy Captures (Q, R, K, N, B)
         this.triggerBoardShake();
       }
 
@@ -260,7 +253,7 @@ export class ChessApp {
 
   triggerBoardShake() {
     this.boardEl.classList.remove('board-shake');
-    void this.boardEl.offsetWidth; // Force reflow
+    void this.boardEl.offsetWidth;
     this.boardEl.classList.add('board-shake');
     setTimeout(() => this.boardEl.classList.remove('board-shake'), 250);
   }
