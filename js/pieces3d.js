@@ -1,5 +1,5 @@
 /**
- * 360° Photorealistic 3D Piece Geometries & Dynamic Admin Customization System
+ * 360° Photorealistic 3D Piece Geometries, Proportional Scaling, & Custom Texture Standees
  */
 
 let texWhiteWood = null;
@@ -170,6 +170,18 @@ export function createWoodMaterials() {
   return { matWhitePiece, matBlackPiece, matWhiteAccent, matBlackAccent };
 }
 
+/**
+ * Height & Scale Configuration for Proportional Shrek / Staunton Lineup
+ */
+const PIECE_SCALES = {
+  'k': { height: 1.55, width: 0.95, baseRadius: 0.42 }, // King (Tallest - Shrek / Farquaad)
+  'q': { height: 1.45, width: 0.90, baseRadius: 0.40 }, // Queen (Shrek / Fiona)
+  'b': { height: 1.30, width: 0.85, baseRadius: 0.38 }, // Bishop (Humpty Dumpty)
+  'n': { height: 1.25, width: 0.85, baseRadius: 0.38 }, // Knight (Donkey)
+  'r': { height: 1.18, width: 0.82, baseRadius: 0.38 }, // Rook (Puss in Boots)
+  'p': { height: 0.85, width: 0.70, baseRadius: 0.35 }  // Pawn (Shortest & Uniform - Three Little Pigs)
+};
+
 export function build3DPieceMesh(type, materials) {
   const isWhite = type === type.toUpperCase();
   const pieceMat = isWhite ? materials.matWhitePiece : materials.matBlackPiece;
@@ -177,6 +189,7 @@ export function build3DPieceMesh(type, materials) {
 
   const group = new THREE.Group();
   const lowerType = type.toLowerCase();
+  const config = PIECE_SCALES[lowerType] || PIECE_SCALES['p'];
 
   // 1. Check for Admin Uploaded 3D Model (.gltf / .glb / .obj)
   if (customPieceModels[type]) {
@@ -185,16 +198,16 @@ export function build3DPieceMesh(type, materials) {
     return group;
   }
 
-  // 2. Check for Admin Uploaded Custom Image Texture
+  // 2. Check for Admin Uploaded Custom Image Texture (Acrylic Standee Token)
   if (customPieceTextures[type]) {
-    const baseGeo = new THREE.CylinderGeometry(0.38, 0.42, 0.12, 24);
+    const baseGeo = new THREE.CylinderGeometry(config.baseRadius, config.baseRadius + 0.04, 0.12, 24);
     const baseMesh = new THREE.Mesh(baseGeo, pieceMat);
     baseMesh.position.y = 0.06;
     baseMesh.castShadow = true;
     baseMesh.receiveShadow = true;
     group.add(baseMesh);
 
-    const ringGeo = new THREE.TorusGeometry(0.36, 0.025, 12, 24);
+    const ringGeo = new THREE.TorusGeometry(config.baseRadius - 0.02, 0.025, 12, 24);
     const ringMesh = new THREE.Mesh(ringGeo, accentMat);
     ringMesh.rotation.x = Math.PI / 2;
     ringMesh.position.y = 0.12;
@@ -208,10 +221,9 @@ export function build3DPieceMesh(type, materials) {
       roughness: 0.3
     });
 
-    const heightScale = 1.25;
-    const planeGeo = new THREE.PlaneGeometry(0.85, heightScale);
+    const planeGeo = new THREE.PlaneGeometry(config.width, config.height);
     const spriteMesh = new THREE.Mesh(planeGeo, spriteMat);
-    spriteMesh.position.y = 0.12 + (heightScale / 2);
+    spriteMesh.position.y = 0.12 + (config.height / 2);
     spriteMesh.castShadow = true;
     group.add(spriteMesh);
 
@@ -221,14 +233,14 @@ export function build3DPieceMesh(type, materials) {
 
   // Default Custom Donkey Knight (N / n)
   if (lowerType === 'n') {
-    const baseGeo = new THREE.CylinderGeometry(0.38, 0.42, 0.12, 24);
+    const baseGeo = new THREE.CylinderGeometry(config.baseRadius, config.baseRadius + 0.04, 0.12, 24);
     const baseMesh = new THREE.Mesh(baseGeo, pieceMat);
     baseMesh.position.y = 0.06;
     baseMesh.castShadow = true;
     baseMesh.receiveShadow = true;
     group.add(baseMesh);
 
-    const ringGeo = new THREE.TorusGeometry(0.36, 0.025, 12, 24);
+    const ringGeo = new THREE.TorusGeometry(config.baseRadius - 0.02, 0.025, 12, 24);
     const ringMesh = new THREE.Mesh(ringGeo, accentMat);
     ringMesh.rotation.x = Math.PI / 2;
     ringMesh.position.y = 0.12;
@@ -243,10 +255,9 @@ export function build3DPieceMesh(type, materials) {
       roughness: 0.3
     });
 
-    const heightScale = 1.25;
-    const planeGeo = new THREE.PlaneGeometry(0.85, heightScale);
+    const planeGeo = new THREE.PlaneGeometry(config.width, config.height);
     const spriteMesh = new THREE.Mesh(planeGeo, spriteMat);
-    spriteMesh.position.y = 0.12 + (heightScale / 2);
+    spriteMesh.position.y = 0.12 + (config.height / 2);
     spriteMesh.castShadow = true;
     group.add(spriteMesh);
 
@@ -256,15 +267,15 @@ export function build3DPieceMesh(type, materials) {
 
   let points = [];
 
-  if (lowerType === 'p') { // PAWN
+  if (lowerType === 'p') { // PAWN (Shortest & Uniform)
     points = [
       new THREE.Vector2(0, 0),
-      new THREE.Vector2(0.38, 0.06),
-      new THREE.Vector2(0.32, 0.14),
-      new THREE.Vector2(0.18, 0.36),
-      new THREE.Vector2(0.15, 0.50),
-      new THREE.Vector2(0.22, 0.54),
-      new THREE.Vector2(0.18, 0.58),
+      new THREE.Vector2(0.35, 0.06),
+      new THREE.Vector2(0.30, 0.14),
+      new THREE.Vector2(0.16, 0.36),
+      new THREE.Vector2(0.14, 0.50),
+      new THREE.Vector2(0.20, 0.54),
+      new THREE.Vector2(0.16, 0.58),
       new THREE.Vector2(0, 0.65)
     ];
     const pawnBody = new THREE.Mesh(new THREE.LatheGeometry(points, 24), pieceMat);
@@ -272,7 +283,7 @@ export function build3DPieceMesh(type, materials) {
     pawnBody.receiveShadow = true;
     group.add(pawnBody);
 
-    const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), pieceMat);
+    const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.20, 24, 24), pieceMat);
     ballMesh.position.y = 0.72;
     ballMesh.castShadow = true;
     group.add(ballMesh);
@@ -352,7 +363,7 @@ export function build3DPieceMesh(type, materials) {
     topBall.castShadow = true;
     group.add(topBall);
 
-  } else if (lowerType === 'k') { // KING
+  } else if (lowerType === 'k') { // KING (Tallest)
     points = [
       new THREE.Vector2(0, 0),
       new THREE.Vector2(0.42, 0.06),
