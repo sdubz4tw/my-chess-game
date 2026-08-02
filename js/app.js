@@ -1,5 +1,5 @@
 /**
- * 2D Chess.com Main Web Application Controller & Renderer (Vertical Eval Bar & Arcade Commentary)
+ * 2D Chess.com Main Web Application Controller & Renderer (Piece-Specific Arcade Capture VFX & Floating Text)
  */
 
 import { getBestMove, evaluateBoard, classifyMove } from './ai.js';
@@ -17,6 +17,15 @@ const PIECES_SVG = {
   'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
   'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
   'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
+};
+
+const PIECE_CAPTURE_TEXT = {
+  'p': 'STAB!',
+  'n': 'TRAMPLE!',
+  'b': 'SMITE!',
+  'r': 'CRUSH!',
+  'q': 'NOVA SLASHER!',
+  'k': 'ROYAL DOMINANCE!'
 };
 
 export class ChessApp {
@@ -234,6 +243,7 @@ export class ChessApp {
   }
 
   makeMove(from, to, promotion = 'q') {
+    const attackingPiece = this.game.get(from);
     const evalBefore = evaluateBoard(this.game);
     const turnMoving = this.game.turn();
     const move = this.game.move({ from, to, promotion });
@@ -245,7 +255,9 @@ export class ChessApp {
         const capSymbol = move.color === 'w' ? move.captured.toLowerCase() : move.captured.toUpperCase();
         if (move.color === 'w') this.capturedBlack.push(capSymbol);
         else this.capturedWhite.push(capSymbol);
-        this.triggerBoardShake();
+
+        // Piece-Specific Capture Visual Effects
+        this.triggerCaptureVFX(attackingPiece ? attackingPiece.type.toLowerCase() : 'p', to);
       }
 
       const evalAfter = evaluateBoard(this.game);
@@ -265,9 +277,49 @@ export class ChessApp {
     }
   }
 
+  /**
+   * PIECE-SPECIFIC ARCADE CAPTURE VFX & FLOATING COMBAT TEXT
+   */
+  triggerCaptureVFX(pieceType, targetSq) {
+    const sqEl = document.querySelector(`.sq[data-sq="${targetSq}"]`);
+    if (!sqEl) return;
+
+    // 1. Floating Combat Text
+    const textStr = PIECE_CAPTURE_TEXT[pieceType] || 'CRUSH!';
+    const floatEl = document.createElement('div');
+    floatEl.className = 'vfx-floating-text';
+    floatEl.textContent = textStr;
+    sqEl.appendChild(floatEl);
+
+    // 2. Visual Particle & FX Overlays
+    const vfxDiv = document.createElement('div');
+    if (pieceType === 'p') {
+      vfxDiv.className = 'vfx-spark-burst';
+    } else if (pieceType === 'n') {
+      vfxDiv.className = 'vfx-shockwave-ring';
+    } else if (pieceType === 'b') {
+      vfxDiv.className = 'vfx-holy-beam';
+    } else if (pieceType === 'r') {
+      vfxDiv.className = 'vfx-dust-trail';
+      this.triggerBoardShake();
+    } else if (pieceType === 'q') {
+      vfxDiv.className = 'vfx-nova-ring';
+      this.triggerBoardShake();
+    } else if (pieceType === 'k') {
+      vfxDiv.className = 'vfx-royal-aura';
+    }
+
+    sqEl.appendChild(vfxDiv);
+
+    // Clean up temporary DOM nodes after animation
+    setTimeout(() => {
+      if (floatEl.parentNode) floatEl.parentNode.removeChild(floatEl);
+      if (vfxDiv.parentNode) vfxDiv.parentNode.removeChild(vfxDiv);
+    }, 650);
+  }
+
   updateEvalGauge() {
     const scoreInPawns = evaluateBoard(this.game) / 100.0;
-    // Map score (-10.0 to +10.0) to height percentage (5% to 95%)
     const fillPercent = Math.min(Math.max(50 + (scoreInPawns * 4.5), 5), 95);
 
     if (this.evalFillEl) {
@@ -342,14 +394,17 @@ export class ChessApp {
         const bestMove = getBestMove(this.game, this.gameMode);
 
         if (bestMove) {
+          const attackingPiece = this.game.get(bestMove.from);
           const moveRes = this.game.move(bestMove);
+
           if (moveRes) {
             this.lastMove = { from: moveRes.from, to: moveRes.to };
             if (moveRes.captured) {
               const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
               if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
               else this.capturedWhite.push(capSymbol);
-              this.triggerBoardShake();
+              
+              this.triggerCaptureVFX(attackingPiece ? attackingPiece.type.toLowerCase() : 'p', moveRes.to);
             }
 
             const evalAfter = evaluateBoard(this.game);
@@ -370,7 +425,6 @@ export class ChessApp {
               const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
               if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
               else this.capturedWhite.push(capSymbol);
-              this.triggerBoardShake();
             }
             this.updateEvalGauge();
           }
