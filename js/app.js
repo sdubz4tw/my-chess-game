@@ -1,5 +1,5 @@
 /**
- * 2D Chess.com Main Web Application Controller & Renderer (Standard Vector Assets & Fail-Safe AI)
+ * 2D Chess.com Main Web Application Controller & Renderer (Selection Pulse, Move Trails, Board Shake & Capture Pop FX)
  */
 
 import { getBestMove } from './ai.js';
@@ -22,7 +22,6 @@ const PIECES_SVG = {
 
 export class ChessApp {
   constructor() {
-    // Clear any previous custom piece overrides or localStorage settings on load
     localStorage.clear();
 
     this.game = new Chess();
@@ -33,6 +32,7 @@ export class ChessApp {
     this.gameMode = 'ai-medium';
     this.userSide = 'w';
     this.pendingPromotion = null;
+    this.lastMove = null; // { from, to }
 
     this.capturedWhite = [];
     this.capturedBlack = [];
@@ -88,6 +88,7 @@ export class ChessApp {
     this.selectedSq = null;
     this.legalMoves = [];
     this.pendingPromotion = null;
+    this.lastMove = null;
     this.capturedWhite = [];
     this.capturedBlack = [];
 
@@ -119,10 +120,17 @@ export class ChessApp {
         sqDiv.className = `sq ${isLight ? 'light' : 'dark'}`;
         sqDiv.dataset.sq = sqName;
 
+        // Selection Highlight
         if (this.selectedSq === sqName) {
           sqDiv.classList.add('selected');
         }
 
+        // Move Trail Highlights
+        if (this.lastMove && (this.lastMove.from === sqName || this.lastMove.to === sqName)) {
+          sqDiv.classList.add('last-move');
+        }
+
+        // Legal Move Dot / Ring
         const legalMove = this.legalMoves.find(m => m.to === sqName);
         if (legalMove) {
           const dot = document.createElement('div');
@@ -130,6 +138,7 @@ export class ChessApp {
           sqDiv.appendChild(dot);
         }
 
+        // Check Highlight
         if (this.game.in_check()) {
           const pieceOnSq = boardState[7 - r][c];
           if (pieceOnSq && pieceOnSq.type.toUpperCase() === 'K' && pieceOnSq.color === this.game.turn()) {
@@ -137,6 +146,7 @@ export class ChessApp {
           }
         }
 
+        // Render Piece Image
         const piece = boardState[7 - r][c];
         if (piece) {
           const pieceSymbol = piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase();
@@ -221,12 +231,19 @@ export class ChessApp {
   }
 
   makeMove(from, to, promotion = 'q') {
+    const targetPieceBefore = this.game.get(to);
     const move = this.game.move({ from, to, promotion });
+
     if (move) {
+      this.lastMove = { from, to };
+
       if (move.captured) {
         const capSymbol = move.color === 'w' ? move.captured.toLowerCase() : move.captured.toUpperCase();
         if (move.color === 'w') this.capturedBlack.push(capSymbol);
         else this.capturedWhite.push(capSymbol);
+
+        // Screen Shake for Heavy Captures (Q, R, K, N, B)
+        this.triggerBoardShake();
       }
 
       this.selectedSq = null;
@@ -235,11 +252,17 @@ export class ChessApp {
       this.updateHUD();
       this.checkGameState();
 
-      // Trigger AI Move asynchronously after 250ms render delay
       if (!this.game.game_over() && this.gameMode !== 'pvp' && this.game.turn() !== this.userSide) {
         setTimeout(() => this.triggerAIMove(), 250);
       }
     }
+  }
+
+  triggerBoardShake() {
+    this.boardEl.classList.remove('board-shake');
+    void this.boardEl.offsetWidth; // Force reflow
+    this.boardEl.classList.add('board-shake');
+    setTimeout(() => this.boardEl.classList.remove('board-shake'), 250);
   }
 
   undoMove() {
@@ -250,13 +273,11 @@ export class ChessApp {
     }
     this.selectedSq = null;
     this.legalMoves = [];
+    this.lastMove = null;
     this.renderBoard();
     this.updateHUD();
   }
 
-  /**
-   * DIRECT ASYNCHRONOUS AI MOVE TRIGGER WITH FAIL-SAFE FALLBACK
-   */
   triggerAIMove() {
     if (this.game.game_over()) return;
     const aiThinking = document.getElementById('aiThinking');
@@ -267,10 +288,14 @@ export class ChessApp {
         const bestMove = getBestMove(this.game, this.gameMode);
         if (bestMove) {
           const moveRes = this.game.move(bestMove);
-          if (moveRes && moveRes.captured) {
-            const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
-            if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
-            else this.capturedWhite.push(capSymbol);
+          if (moveRes) {
+            this.lastMove = { from: moveRes.from, to: moveRes.to };
+            if (moveRes.captured) {
+              const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
+              if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
+              else this.capturedWhite.push(capSymbol);
+              this.triggerBoardShake();
+            }
           }
         }
       } catch (err) {
@@ -279,10 +304,14 @@ export class ChessApp {
         if (moves.length > 0) {
           const randMove = moves[Math.floor(Math.random() * moves.length)];
           const moveRes = this.game.move(randMove);
-          if (moveRes && moveRes.captured) {
-            const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
-            if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
-            else this.capturedWhite.push(capSymbol);
+          if (moveRes) {
+            this.lastMove = { from: moveRes.from, to: moveRes.to };
+            if (moveRes.captured) {
+              const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
+              if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
+              else this.capturedWhite.push(capSymbol);
+              this.triggerBoardShake();
+            }
           }
         }
       }
@@ -340,11 +369,11 @@ export class ChessApp {
     badge.className = `turn-badge ${isWhite ? 'white' : 'black'}`;
 
     document.getElementById('capturedWhite').innerHTML = this.capturedWhite.map(p => 
-      `<img src="${PIECES_SVG[p]}" alt="${p}">`
+      `<img src="${PIECES_SVG[p]}" alt="${p}" class="captured-pop">`
     ).join('');
 
     document.getElementById('capturedBlack').innerHTML = this.capturedBlack.map(p => 
-      `<img src="${PIECES_SVG[p]}" alt="${p}">`
+      `<img src="${PIECES_SVG[p]}" alt="${p}" class="captured-pop">`
     ).join('');
 
     const moveLogEl = document.getElementById('moveLog');
