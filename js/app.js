@@ -1,5 +1,5 @@
 /**
- * 2D Chess.com Main Web Application Controller & Renderer (Piece-Specific Arcade Capture VFX & Floating Text)
+ * 2D Chess.com Main Web Application Controller & Renderer (Clean UI & Sidebar Badges)
  */
 
 import { getBestMove, evaluateBoard, classifyMove } from './ai.js';
@@ -34,8 +34,6 @@ export class ChessApp {
 
     this.game = new Chess();
     this.boardEl = document.getElementById('chessboard');
-    this.arcadeBannerEl = document.getElementById('arcadeBanner');
-    this.arcadeTextEl = document.getElementById('arcadeText');
     this.commentaryBoxEl = document.getElementById('commentaryBox');
     this.evalFillEl = document.getElementById('evalBarWhite');
     this.evalScoreTextEl = document.getElementById('evalScoreText');
@@ -110,7 +108,7 @@ export class ChessApp {
     document.getElementById('checkBadge').style.display = 'none';
     document.getElementById('promotionModal').style.display = 'none';
     document.getElementById('gameOverModal').style.display = 'none';
-    if (this.commentaryBoxEl) this.commentaryBoxEl.textContent = "Game started. Make your opening move!";
+    if (this.commentaryBoxEl) this.commentaryBoxEl.innerHTML = 'Game started. Make your opening move!';
 
     this.renderBoard();
     this.updateHUD();
@@ -262,7 +260,7 @@ export class ChessApp {
 
       const evalAfter = evaluateBoard(this.game);
       const rating = classifyMove(move, evalBefore, evalAfter, turnMoving);
-      this.showArcadeRating(rating);
+      this.updateSidebarCommentary(rating);
       this.updateEvalGauge();
 
       this.selectedSq = null;
@@ -278,20 +276,20 @@ export class ChessApp {
   }
 
   /**
-   * PIECE-SPECIFIC ARCADE CAPTURE VFX & FLOATING COMBAT TEXT
+   * VISIBLE PIECE-SPECIFIC CAPTURE VFX & FLOATING TEXT
    */
   triggerCaptureVFX(pieceType, targetSq) {
     const sqEl = document.querySelector(`.sq[data-sq="${targetSq}"]`);
     if (!sqEl) return;
 
-    // 1. Floating Combat Text
+    // Floating Combat Text
     const textStr = PIECE_CAPTURE_TEXT[pieceType] || 'CRUSH!';
     const floatEl = document.createElement('div');
     floatEl.className = 'vfx-floating-text';
     floatEl.textContent = textStr;
     sqEl.appendChild(floatEl);
 
-    // 2. Visual Particle & FX Overlays
+    // Particle & Visual Overlay
     const vfxDiv = document.createElement('div');
     if (pieceType === 'p') {
       vfxDiv.className = 'vfx-spark-burst';
@@ -311,11 +309,19 @@ export class ChessApp {
 
     sqEl.appendChild(vfxDiv);
 
-    // Clean up temporary DOM nodes after animation
     setTimeout(() => {
       if (floatEl.parentNode) floatEl.parentNode.removeChild(floatEl);
       if (vfxDiv.parentNode) vfxDiv.parentNode.removeChild(vfxDiv);
     }, 650);
+  }
+
+  updateSidebarCommentary(rating) {
+    if (this.commentaryBoxEl) {
+      this.commentaryBoxEl.innerHTML = `${rating.badgeHTML} <span>${rating.commentary}</span>`;
+      if (rating.type === 'blunder') {
+        this.triggerBoardShake();
+      }
+    }
   }
 
   updateEvalGauge() {
@@ -338,26 +344,6 @@ export class ChessApp {
           this.evalScoreTextEl.classList.remove('black-lead');
         }
       }
-    }
-  }
-
-  showArcadeRating(rating) {
-    if (this.commentaryBoxEl) {
-      this.commentaryBoxEl.textContent = rating.commentary;
-    }
-
-    if (rating.bannerText && this.arcadeTextEl && this.arcadeBannerEl) {
-      this.arcadeTextEl.textContent = rating.bannerText;
-      this.arcadeTextEl.className = `arcade-text ${rating.type}`;
-      this.arcadeBannerEl.className = 'arcade-banner show-banner';
-
-      if (rating.type === 'blunder') {
-        this.triggerBoardShake();
-      }
-
-      setTimeout(() => {
-        this.arcadeBannerEl.className = 'arcade-banner';
-      }, 1100);
     }
   }
 
@@ -403,13 +389,13 @@ export class ChessApp {
               const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
               if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
               else this.capturedWhite.push(capSymbol);
-              
+
               this.triggerCaptureVFX(attackingPiece ? attackingPiece.type.toLowerCase() : 'p', moveRes.to);
             }
 
             const evalAfter = evaluateBoard(this.game);
             const rating = classifyMove(moveRes, evalBefore, evalAfter, turnMoving);
-            this.showArcadeRating(rating);
+            this.updateSidebarCommentary(rating);
             this.updateEvalGauge();
           }
         }

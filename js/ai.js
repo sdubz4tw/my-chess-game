@@ -1,5 +1,5 @@
 /**
- * 2D Chess.com AI Engine & Live Move Evaluation Classification
+ * 2D Chess.com AI Engine & Live Move Evaluation Classification (Sidebar Badges Edition)
  */
 
 const PST = {
@@ -88,44 +88,41 @@ export function evaluateBoard(game) {
   return totalScore;
 }
 
-/**
- * STREET FIGHTER MOVE CLASSIFIER & COMMENTARY GENERATOR
- */
 export function classifyMove(move, evalBefore, evalAfter, turn) {
   const delta = (turn === 'w') ? (evalAfter - evalBefore) : (evalBefore - evalAfter);
 
   if (move.captured && delta >= 120) {
     return {
       type: 'brilliant',
-      bannerText: '✨ BRILLIANT!!',
-      commentary: `${turn === 'w' ? 'White' : 'Black'} unleashes an incredible tactical sacrifice strike!`
+      badgeHTML: '<span class="badge-tag badge-brilliant">✨ BRILLIANT</span>',
+      commentary: `${turn === 'w' ? 'White' : 'Black'} plays a brilliant tactical sacrifice!`
     };
   }
   if (delta >= 40) {
     return {
       type: 'great',
-      bannerText: '⚡ GREAT MOVE!',
-      commentary: `${turn === 'w' ? 'White' : 'Black'} seizes absolute control of the board!`
+      badgeHTML: '<span class="badge-tag badge-great">⚡ GREAT</span>',
+      commentary: `${turn === 'w' ? 'White' : 'Black'} seizes control of key squares.`
     };
   }
   if (delta >= -40) {
     return {
       type: 'good',
-      bannerText: null, // No banner for standard moves
-      commentary: `Solid position development by ${turn === 'w' ? 'White' : 'Black'}.`
+      badgeHTML: '<span class="badge-tag badge-good">GOOD</span>',
+      commentary: `Solid development by ${turn === 'w' ? 'White' : 'Black'}.`
     };
   }
   if (delta >= -180) {
     return {
       type: 'mistake',
-      bannerText: '⚠️ MISTAKE!',
-      commentary: `Slight misstep! ${turn === 'w' ? 'White' : 'Black'} opens up defensive gaps.`
+      badgeHTML: '<span class="badge-tag badge-mistake">⚠️ MISTAKE</span>',
+      commentary: `Slight misstep opening up defensive gaps.`
     };
   }
   return {
     type: 'blunder',
-    bannerText: '💥 CRITICAL BLUNDER!',
-    commentary: `Ouch! ${turn === 'w' ? 'White' : 'Black'} leaves a major piece exposed!`
+    badgeHTML: '<span class="badge-tag badge-blunder">💥 BLUNDER</span>',
+    commentary: `Disaster! ${turn === 'w' ? 'White' : 'Black'} leaves a piece exposed!`
   };
 }
 
