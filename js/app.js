@@ -1,5 +1,5 @@
 /**
- * 2D Chess.com Main Web Application Controller & Renderer (Clean UI & Sidebar Badges)
+ * 2D Chess.com Main Web Application Controller & Renderer (Dedicated 2D Canvas VFX Overlay Engine)
  */
 
 import { getBestMove, evaluateBoard, classifyMove } from './ai.js';
@@ -34,6 +34,9 @@ export class ChessApp {
 
     this.game = new Chess();
     this.boardEl = document.getElementById('chessboard');
+    this.canvas = document.getElementById('vfx-overlay');
+    this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+
     this.commentaryBoxEl = document.getElementById('commentaryBox');
     this.evalFillEl = document.getElementById('evalBarWhite');
     this.evalScoreTextEl = document.getElementById('evalScoreText');
@@ -48,15 +51,27 @@ export class ChessApp {
 
     this.capturedWhite = [];
     this.capturedBlack = [];
+    this.activeVFX = [];
 
     this.init();
   }
 
   init() {
     this.setupEventListeners();
+    this.resizeCanvas();
     this.renderBoard();
     this.updateHUD();
     this.updateEvalGauge();
+
+    window.addEventListener('resize', () => this.resizeCanvas());
+    requestAnimationFrame((t) => this.loopVFX(t));
+  }
+
+  resizeCanvas() {
+    if (!this.canvas || !this.boardEl) return;
+    const rect = this.boardEl.getBoundingClientRect();
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
   }
 
   setupEventListeners() {
@@ -104,6 +119,7 @@ export class ChessApp {
     this.lastMove = null;
     this.capturedWhite = [];
     this.capturedBlack = [];
+    this.activeVFX = [];
 
     document.getElementById('checkBadge').style.display = 'none';
     document.getElementById('promotionModal').style.display = 'none';
@@ -254,8 +270,8 @@ export class ChessApp {
         if (move.color === 'w') this.capturedBlack.push(capSymbol);
         else this.capturedWhite.push(capSymbol);
 
-        // Piece-Specific Capture Visual Effects
-        this.triggerCaptureVFX(attackingPiece ? attackingPiece.type.toLowerCase() : 'p', to);
+        // Synchronous Canvas 2D Capture VFX Trigger
+        this.triggerCanvasVFX(attackingPiece ? attackingPiece.type.toLowerCase() : 'p', to);
       }
 
       const evalAfter = evaluateBoard(this.game);
@@ -276,43 +292,211 @@ export class ChessApp {
   }
 
   /**
-   * VISIBLE PIECE-SPECIFIC CAPTURE VFX & FLOATING TEXT
+   * DIRECT 2D CANVAS CAPTURE VFX ENGINE
    */
-  triggerCaptureVFX(pieceType, targetSq) {
-    const sqEl = document.querySelector(`.sq[data-sq="${targetSq}"]`);
-    if (!sqEl) return;
+  getSquareCenterCoords(targetSq) {
+    if (!this.canvas) return { x: 0, y: 0 };
+    const fileCol = targetSq.charCodeAt(0) - 97; // 0..7 (a..h)
+    const rankRow = parseInt(targetSq.charAt(1), 10) - 1; // 0..7 (1..8)
 
-    // Floating Combat Text
-    const textStr = PIECE_CAPTURE_TEXT[pieceType] || 'CRUSH!';
-    const floatEl = document.createElement('div');
-    floatEl.className = 'vfx-floating-text';
-    floatEl.textContent = textStr;
-    sqEl.appendChild(floatEl);
+    const c = this.isFlipped ? 7 - fileCol : fileCol;
+    const r = this.isFlipped ? rankRow : 7 - rankRow;
 
-    // Particle & Visual Overlay
-    const vfxDiv = document.createElement('div');
-    if (pieceType === 'p') {
-      vfxDiv.className = 'vfx-spark-burst';
-    } else if (pieceType === 'n') {
-      vfxDiv.className = 'vfx-shockwave-ring';
-    } else if (pieceType === 'b') {
-      vfxDiv.className = 'vfx-holy-beam';
-    } else if (pieceType === 'r') {
-      vfxDiv.className = 'vfx-dust-trail';
+    const sqW = this.canvas.width / 8;
+    const sqH = this.canvas.height / 8;
+
+    return {
+      x: c * sqW + sqW / 2,
+      y: r * sqH + sqH / 2,
+      sqW, sqH
+    };
+  }
+
+  triggerCanvasVFX(attackingPiece, targetSq) {
+    const coords = this.getSquareCenterCoords(targetSq);
+    console.log("VFX Triggered for:", attackingPiece, "at coords:", coords);
+
+    const textStr = PIECE_CAPTURE_TEXT[attackingPiece] || 'CRUSH!';
+    const now = performance.now();
+
+    // 1. Add Floating Combat Text
+    this.activeVFX.push({
+      type: 'text',
+      text: textStr,
+      x: coords.x,
+      y: coords.y,
+      startY: coords.y,
+      startTime: now,
+      duration: 650
+    });
+
+    // 2. Add Piece-Specific Canvas VFX
+    if (attackingPiece === 'p') { // PAWN: 12 Fast Spark Particles
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * Math.PI * 2) / 12;
+        const speed = 2 + Math.random() * 3;
+        this.activeVFX.push({
+          type: 'spark',
+          x: coords.x, y: coords.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 3 + Math.random() * 3,
+          color: i % 2 === 0 ? '#fef08a' : '#f59e0b',
+          startTime: now,
+          duration: 350
+        });
+      }
+    } else if (attackingPiece === 'n') { // KNIGHT: Expanding Radial Shockwave Circle
+      this.activeVFX.push({
+        type: 'shockwave',
+        x: coords.x, y: coords.y,
+        maxRadius: coords.sqW * 0.95,
+        color: '#38bdf8',
+        startTime: now,
+        duration: 450
+      });
+    } else if (attackingPiece === 'b') { // BISHOP: Vertical Holy Light Beam
+      this.activeVFX.push({
+        type: 'holy_beam',
+        x: coords.x, y: coords.y,
+        width: coords.sqW * 0.6,
+        height: this.canvas.height,
+        startTime: now,
+        duration: 400
+      });
+    } else if (attackingPiece === 'r') { // ROOK: Heavy Board Shake + Dust Cluster
       this.triggerBoardShake();
-    } else if (pieceType === 'q') {
-      vfxDiv.className = 'vfx-nova-ring';
+      for (let i = 0; i < 15; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1 + Math.random() * 2.5;
+        this.activeVFX.push({
+          type: 'dust',
+          x: coords.x, y: coords.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 4 + Math.random() * 4,
+          color: '#a8a29e',
+          startTime: now,
+          duration: 400
+        });
+      }
+    } else if (attackingPiece === 'q') { // QUEEN: Purple Energy Nova Ring + Screen Shake
       this.triggerBoardShake();
-    } else if (pieceType === 'k') {
-      vfxDiv.className = 'vfx-royal-aura';
+      this.activeVFX.push({
+        type: 'queen_nova',
+        x: coords.x, y: coords.y,
+        maxRadius: coords.sqW * 1.3,
+        color: '#c084fc',
+        startTime: now,
+        duration: 500
+      });
+    } else if (attackingPiece === 'k') { // KING: Golden Starburst Aura Pulse
+      this.activeVFX.push({
+        type: 'royal_starburst',
+        x: coords.x, y: coords.y,
+        maxRadius: coords.sqW * 1.1,
+        color: '#f59e0b',
+        startTime: now,
+        duration: 550
+      });
     }
+  }
 
-    sqEl.appendChild(vfxDiv);
+  loopVFX(timestamp) {
+    requestAnimationFrame((t) => this.loopVFX(t));
 
-    setTimeout(() => {
-      if (floatEl.parentNode) floatEl.parentNode.removeChild(floatEl);
-      if (vfxDiv.parentNode) vfxDiv.parentNode.removeChild(vfxDiv);
-    }, 650);
+    if (!this.ctx || !this.canvas) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    if (this.activeVFX.length === 0) return;
+
+    this.activeVFX = this.activeVFX.filter(vfx => {
+      const elapsed = timestamp - vfx.startTime;
+      const progress = Math.min(elapsed / vfx.duration, 1.0);
+      if (progress >= 1.0) return false;
+
+      const alpha = 1.0 - progress;
+
+      this.ctx.save();
+
+      if (vfx.type === 'text') {
+        const currY = vfx.startY - (progress * 35);
+        this.ctx.globalAlpha = alpha;
+        this.ctx.font = '900 18px Outfit, sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillStyle = '#fde047';
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        this.ctx.shadowBlur = 8;
+        this.ctx.fillText(vfx.text, vfx.x, currY);
+      } else if (vfx.type === 'spark') {
+        vfx.x += vfx.vx;
+        vfx.y += vfx.vy;
+        this.ctx.globalAlpha = alpha;
+        this.ctx.fillStyle = vfx.color;
+        this.ctx.beginPath();
+        this.ctx.arc(vfx.x, vfx.y, vfx.size * (1 - progress * 0.5), 0, Math.PI * 2);
+        this.ctx.fill();
+      } else if (vfx.type === 'shockwave') {
+        const radius = progress * vfx.maxRadius;
+        this.ctx.globalAlpha = alpha;
+        this.ctx.strokeStyle = vfx.color;
+        this.ctx.lineWidth = 4 * (1 - progress);
+        this.ctx.shadowColor = '#0284c7';
+        this.ctx.shadowBlur = 15;
+        this.ctx.beginPath();
+        this.ctx.arc(vfx.x, vfx.y, radius, 0, Math.PI * 2);
+        this.ctx.stroke();
+      } else if (vfx.type === 'holy_beam') {
+        this.ctx.globalAlpha = Math.sin(progress * Math.PI) * 0.85;
+        const grad = this.ctx.createLinearGradient(vfx.x, 0, vfx.x, vfx.height);
+        grad.addColorStop(0, 'rgba(255,255,255,0)');
+        grad.addColorStop(0.5, '#fef08a');
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        this.ctx.fillStyle = grad;
+        this.ctx.shadowColor = '#eab308';
+        this.ctx.shadowBlur = 20;
+        this.ctx.fillRect(vfx.x - (vfx.width / 2), 0, vfx.width * (1 + progress * 0.4), vfx.height);
+      } else if (vfx.type === 'dust') {
+        vfx.x += vfx.vx;
+        vfx.y += vfx.vy;
+        this.ctx.globalAlpha = alpha * 0.7;
+        this.ctx.fillStyle = vfx.color;
+        this.ctx.beginPath();
+        this.ctx.arc(vfx.x, vfx.y, vfx.size * (1 + progress * 0.5), 0, Math.PI * 2);
+        this.ctx.fill();
+      } else if (vfx.type === 'queen_nova') {
+        const radius = progress * vfx.maxRadius;
+        this.ctx.globalAlpha = alpha;
+        this.ctx.strokeStyle = vfx.color;
+        this.ctx.lineWidth = 6 * (1 - progress);
+        this.ctx.shadowColor = '#a855f7';
+        this.ctx.shadowBlur = 25;
+        this.ctx.beginPath();
+        this.ctx.arc(vfx.x, vfx.y, radius, 0, Math.PI * 2);
+        this.ctx.stroke();
+      } else if (vfx.type === 'royal_starburst') {
+        const radius = progress * vfx.maxRadius;
+        this.ctx.globalAlpha = alpha;
+        this.ctx.strokeStyle = vfx.color;
+        this.ctx.lineWidth = 5 * (1 - progress);
+        this.ctx.shadowColor = '#eab308';
+        this.ctx.shadowBlur = 25;
+        this.ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * Math.PI) / 4;
+          const sx = vfx.x + Math.cos(angle) * (radius * 0.3);
+          const sy = vfx.y + Math.sin(angle) * (radius * 0.3);
+          const ex = vfx.x + Math.cos(angle) * radius;
+          const ey = vfx.y + Math.sin(angle) * radius;
+          this.ctx.moveTo(sx, sy);
+          this.ctx.lineTo(ex, ey);
+        }
+        this.ctx.stroke();
+      }
+
+      this.ctx.restore();
+      return true;
+    });
   }
 
   updateSidebarCommentary(rating) {
@@ -390,7 +574,7 @@ export class ChessApp {
               if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
               else this.capturedWhite.push(capSymbol);
 
-              this.triggerCaptureVFX(attackingPiece ? attackingPiece.type.toLowerCase() : 'p', moveRes.to);
+              this.triggerCanvasVFX(attackingPiece ? attackingPiece.type.toLowerCase() : 'p', moveRes.to);
             }
 
             const evalAfter = evaluateBoard(this.game);
