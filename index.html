@@ -3,58 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apple Chess 3D Baseline - FIDE Grandmaster Edition</title>
+  <title>Chess.com 2D Baseline - FIDE & AI Engine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Three.js and OrbitControls & Model Loaders from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+  <!-- chess.js FIDE engine CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
   <style>
-    :root {
-      --bg-gradient: radial-gradient(circle at 50% 30%, #f7f3eb 0%, #e5dec9 100%);
-      --hud-bg: rgba(247, 243, 235, 0.88);
-      --hud-border: rgba(40, 35, 30, 0.2);
-      --accent: #2b2725;
-      --accent-hover: #1c1917;
-      --text-main: #1c1917;
-      --text-muted: #66605b;
-    }
-
-    [data-theme="vintage"] {
-      --bg-gradient: radial-gradient(circle at 50% 30%, #f4efe6 0%, #dcd0bc 100%);
-      --hud-bg: rgba(245, 240, 232, 0.85);
-      --hud-border: rgba(60, 45, 30, 0.15);
-      --accent: #8b5a2b;
-      --accent-hover: #6e441f;
-      --text-main: #292524;
-      --text-muted: #78716c;
-    }
-
-    [data-theme="porcelain"] {
-      --bg-gradient: radial-gradient(circle at 50% 30%, #2a2a40 0%, #12121e 100%);
-      --hud-bg: rgba(20, 20, 35, 0.65);
-      --hud-border: rgba(255, 255, 255, 0.12);
-      --accent: #10b981;
-      --accent-hover: #059669;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-    }
-
-    [data-theme="cyber"] {
-      --bg-gradient: radial-gradient(circle at 50% 30%, #0f172a 0%, #020617 100%);
-      --hud-bg: rgba(15, 23, 42, 0.75);
-      --hud-border: rgba(56, 189, 248, 0.2);
-      --accent: #0284c7;
-      --accent-hover: #0369a1;
-      --text-main: #f0f9ff;
-      --text-muted: #38bdf8;
-    }
-
     * {
       box-sizing: border-box;
       margin: 0;
@@ -65,173 +22,210 @@
       outline: none !important;
     }
 
-    canvas, div, img, button, select, input {
-      outline: none !important;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-
-    img {
-      pointer-events: none;
-      -webkit-user-drag: none;
-    }
-
     body {
       font-family: 'Outfit', sans-serif;
-      background: #e5dec9;
-      background: var(--bg-gradient);
-      color: var(--text-main);
+      background: #302e2b;
+      color: #ffffff;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
       display: flex;
-      transition: background 0.4s ease, color 0.4s ease;
+      justify-content: center;
+      align-items: center;
     }
 
-    #canvas-container {
+    .app-layout {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      justify-content: center;
+      max-width: 1200px;
+      width: 95%;
+      height: 90vh;
+    }
+
+    /* Centered 2D Chessboard Container */
+    .board-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chessboard {
+      width: 600px;
+      height: 600px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      border: 4px solid #262421;
+    }
+
+    .sq {
       width: 100%;
       height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
-    }
-
-    /* HUD Interface */
-    .hud {
       position: relative;
-      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .sq.light {
+      background-color: #eeeed2;
+    }
+
+    .sq.dark {
+      background-color: #769656;
+    }
+
+    .sq.selected {
+      background-color: #bbcb2b !important;
+    }
+
+    .sq.in-check {
+      background-color: #eb4747 !important;
+    }
+
+    .piece-img {
+      width: 85%;
+      height: 85%;
+      object-fit: contain;
+      pointer-events: auto;
+      cursor: grab;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    }
+
+    .piece-img:active {
+      cursor: grabbing;
+    }
+
+    .legal-dot {
+      width: 22px;
+      height: 22px;
+      background: rgba(0, 0, 0, 0.18);
+      border-radius: 50%;
       pointer-events: none;
+    }
+
+    .legal-ring {
       width: 100%;
       height: 100%;
+      border: 6px solid rgba(0, 0, 0, 0.18);
+      border-radius: 50%;
+      pointer-events: none;
+      position: absolute;
+    }
+
+    /* Side Control Panel (Chess.com Vibe) */
+    .sidebar {
+      background: #262421;
+      border-radius: 16px;
+      width: 360px;
+      height: 600px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       padding: 1.5rem;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
     }
 
-    .hud-header {
-      pointer-events: auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--hud-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--hud-border);
-      padding: 0.85rem 1.5rem;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-    }
-
-    .brand {
+    .brand-header {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .brand img {
-      width: 36px;
-      height: 36px;
+    .brand-header img {
+      width: 38px;
+      height: 38px;
       object-fit: contain;
     }
 
-    .brand h1 {
-      font-family: 'Cinzel', serif;
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: var(--text-main);
+    .brand-header h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: #81b64c;
       text-transform: uppercase;
     }
 
-    .controls-top {
+    .controls-group {
       display: flex;
-      align-items: center;
-      gap: 0.75rem;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin-top: 1rem;
+    }
+
+    .control-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #bababa;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .select-input, .btn {
-      background: rgba(0, 0, 0, 0.05);
-      border: 1px solid var(--hud-border);
-      color: var(--text-main);
-      padding: 0.5rem 0.9rem;
-      border-radius: 10px;
+      background: #302e2b;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
       font-family: inherit;
-      font-size: 0.88rem;
-      font-weight: 500;
+      font-size: 0.9rem;
+      font-weight: 600;
       cursor: pointer;
-      outline: none !important;
       transition: all 0.2s ease;
+      width: 100%;
     }
 
     .select-input option {
-      background: #f7f3eb;
-      color: #1c1917;
+      background: #262421;
+      color: #ffffff;
     }
 
     .btn:hover, .select-input:hover {
-      background: rgba(0, 0, 0, 0.1);
-      border-color: rgba(0, 0, 0, 0.25);
+      background: #3d3a37;
+      border-color: rgba(255, 255, 255, 0.25);
     }
 
     .btn-primary {
-      background: var(--accent);
+      background: #81b64c;
       color: #ffffff;
       border: none;
     }
 
     .btn-primary:hover {
-      background: var(--accent-hover);
+      background: #a3d166;
     }
 
-    .btn-danger {
-      background: rgba(220, 38, 38, 0.1);
-      color: #dc2626;
-      border: 1px solid rgba(220, 38, 38, 0.3);
-    }
-
-    .btn-danger:hover {
-      background: #dc2626;
-      color: #ffffff;
-    }
-
-    /* Sidebar Panel */
-    .hud-body {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      width: 100%;
-    }
-
-    .sidebar {
-      pointer-events: auto;
-      background: var(--hud-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--hud-border);
-      padding: 1.25rem;
-      border-radius: 16px;
-      width: 310px;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
     }
 
     .status-box {
+      background: #302e2b;
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--hud-border);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .turn-indicator {
       display: flex;
       align-items: center;
       gap: 0.6rem;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 0.95rem;
+      font-weight: 700;
     }
 
     .turn-badge {
@@ -240,52 +234,39 @@
       border-radius: 50%;
       background: #ffffff;
       border: 1px solid #1c1917;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
-      transition: background 0.3s;
     }
 
     .turn-badge.black {
       background: #1c1917;
-      border: 1px solid #1c1917;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
     }
 
     .check-badge {
       background: #dc2626;
       color: #fff;
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 0.25rem 0.6rem;
-      border-radius: 6px;
-      letter-spacing: 0.05em;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
       display: none;
-      animation: pulse 1.2s infinite;
-    }
-
-    .history-title {
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
     }
 
     .move-log {
-      max-height: 140px;
+      max-height: 120px;
       overflow-y: auto;
       font-family: monospace;
       font-size: 0.85rem;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.35rem 0.75rem;
-      padding-right: 4px;
+      background: #302e2b;
+      padding: 0.6rem;
+      border-radius: 8px;
     }
 
     .move-item {
-      background: rgba(0, 0, 0, 0.04);
-      padding: 0.25rem 0.5rem;
-      border-radius: 6px;
-      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.25rem 0.4rem;
+      border-radius: 4px;
       display: flex;
       align-items: center;
       gap: 0.3rem;
@@ -295,30 +276,21 @@
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
-      min-height: 44px;
+      min-height: 36px;
     }
 
     .captured-row {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 0.25rem;
-      min-height: 22px;
+      gap: 0.2rem;
+      min-height: 18px;
     }
 
     .captured-row img {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       object-fit: contain;
-      pointer-events: none;
-      -webkit-user-drag: none;
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
-    }
-
-    .camera-tools {
-      pointer-events: auto;
-      display: flex;
-      gap: 0.5rem;
     }
 
     .ai-thinking {
@@ -326,294 +298,163 @@
       align-items: center;
       gap: 0.5rem;
       font-size: 0.85rem;
-      color: #b45309;
-      animation: pulse 1.5s infinite;
+      color: #eab308;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
-
-    /* Modal Dialog Overlays */
+    /* Modal Overlays */
     .modal-overlay {
       position: fixed;
       inset: 0;
       z-index: 100;
-      background: rgba(30, 25, 20, 0.65);
-      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
       display: none;
       align-items: center;
       justify-content: center;
     }
 
     .modal-card {
-      background: rgba(247, 243, 235, 0.96);
-      border: 1px solid var(--hud-border);
-      border-radius: 20px;
+      background: #262421;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
       padding: 2rem;
       text-align: center;
-      max-width: 440px;
+      max-width: 420px;
       width: 90%;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    @keyframes popIn {
-      from { transform: scale(0.85); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
     }
 
     .modal-card h2 {
-      font-family: 'Cinzel', serif;
       font-size: 1.6rem;
       margin-bottom: 0.5rem;
-      color: #1c1917;
-    }
-
-    .modal-card p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      margin-bottom: 1.5rem;
-    }
-
-    /* Admin Portal Grid */
-    .admin-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      max-height: 440px;
-      overflow-y: auto;
-      padding-right: 0.5rem;
-      text-align: left;
-    }
-
-    .admin-card {
-      background: rgba(0, 0, 0, 0.04);
-      border: 1px solid var(--hud-border);
-      border-radius: 12px;
-      padding: 0.85rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .admin-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .admin-card-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .admin-card-title img {
-      width: 24px;
-      height: 24px;
-      object-fit: contain;
-    }
-
-    .admin-file-label {
-      background: var(--hud-bg);
-      border: 1px dashed var(--hud-border);
-      border-radius: 8px;
-      padding: 0.5rem;
-      text-align: center;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .admin-file-label:hover {
-      border-color: var(--accent);
-      background: rgba(0,0,0,0.08);
-    }
-
-    .admin-file-input {
-      display: none;
-    }
-
-    .status-tag {
-      font-size: 0.75rem;
-      color: #16a34a;
-      font-weight: 600;
+      color: #81b64c;
     }
 
     .promo-options {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 0.75rem;
+      margin-top: 1rem;
     }
 
     .promo-btn {
-      background: rgba(0, 0, 0, 0.05);
-      border: 1px solid var(--hud-border);
-      border-radius: 12px;
-      padding: 1rem 0.5rem;
-      color: #1c1917;
+      background: #302e2b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 0.85rem 0.5rem;
       cursor: pointer;
-      transition: all 0.2s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
-      outline: none !important;
+      gap: 0.4rem;
     }
 
     .promo-btn img {
-      width: 48px;
-      height: 48px;
+      width: 42px;
+      height: 42px;
       object-fit: contain;
     }
 
-    .promo-btn span {
-      font-size: 0.8rem;
-      font-family: inherit;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-
     .promo-btn:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-      transform: translateY(-3px);
+      background: #81b64c;
     }
 
-    .promo-btn:hover span {
-      color: #ffffff;
-    }
-
-    .game-over-banner {
-      font-family: 'Cinzel', serif;
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1c1917;
-      margin-bottom: 0.5rem;
-    }
-
-    @media (max-width: 768px) {
-      .hud-header { flex-direction: column; gap: 0.75rem; }
-      .sidebar { width: 100%; }
-      .hud-body { flex-direction: column; gap: 1rem; }
-      .admin-grid { grid-template-columns: 1fr; }
+    @media (max-width: 1024px) {
+      .app-layout { flex-direction: column; height: auto; padding: 1rem 0; }
+      .chessboard { width: 92vw; height: 92vw; max-width: 500px; max-height: 500px; }
+      .sidebar { width: 92vw; max-width: 500px; height: auto; }
     }
   </style>
 </head>
 <body>
 
-  <div id="canvas-container"></div>
-
-  <!-- HUD Interface -->
-  <div class="hud">
-    <div class="hud-header">
-      <div class="brand">
-        <img id="brandIcon" src="assets/donkey_knight.png" alt="Donkey Knight">
-        <h1>Apple Chess 3D</h1>
-      </div>
-
-      <div class="controls-top">
-        <button id="btnAdmin" class="btn btn-primary" style="gap: 0.4rem; display: flex; align-items: center;">⚙️ Customizer</button>
-        <button id="btnHardReset" class="btn btn-danger" style="display: flex; align-items: center; gap: 0.35rem;" title="Hard Reset - Remove All Uploads & Customizations">🔥 Hard Reset</button>
-
-        <select id="boardTheme" class="select-input">
-          <option value="woodcut" selected>Vintage Engraved Woodcut (3D)</option>
-          <option value="vintage">Natural Boxwood & Rosewood (3D)</option>
-          <option value="porcelain">Cobalt Porcelain (3D)</option>
-          <option value="cyber">Midnight Cyber (3D)</option>
-        </select>
-
-        <select id="gameMode" class="select-input">
-          <option value="ai-easy">vs Computer (Easy)</option>
-          <option value="ai-medium" selected>vs Computer (Medium)</option>
-          <option value="ai-hard">vs Computer (Hard)</option>
-          <option value="pvp">Pass & Play (2 Player)</option>
-        </select>
-
-        <select id="playerSide" class="select-input">
-          <option value="white" selected>Play as White</option>
-          <option value="black">Play as Black</option>
-        </select>
-
-        <button id="btnNewGame" class="btn">↻ New Game</button>
-      </div>
+  <div class="app-layout">
+    
+    <!-- 2D Centered Chessboard -->
+    <div class="board-container">
+      <div id="chessboard" class="chessboard"></div>
     </div>
 
-    <div class="hud-body">
-      <div class="sidebar">
-        <div class="status-box">
-          <div class="turn-indicator">
-            <div id="turnBadge" class="turn-badge"></div>
-            <span id="turnText">White's Turn</span>
+    <!-- Chess.com Vibe Side Panel -->
+    <div class="sidebar">
+      <div>
+        <div class="brand-header">
+          <img id="brandIcon" src="assets/donkey_knight.png" alt="Donkey Knight">
+          <h1>Chess.com 2D</h1>
+        </div>
+
+        <div class="controls-group">
+          <div>
+            <div class="control-label">Game Mode</div>
+            <select id="gameMode" class="select-input">
+              <option value="ai-easy">vs Computer (Easy)</option>
+              <option value="ai-medium" selected>vs Computer (Medium)</option>
+              <option value="ai-hard">vs Computer (Hard)</option>
+              <option value="pvp">Pass & Play (2 Player)</option>
+            </select>
           </div>
-          <div id="checkBadge" class="check-badge">Check!</div>
-          <div id="aiThinking" class="ai-thinking">
-            <span>⚙️ AI thinking...</span>
+
+          <div>
+            <div class="control-label">Player Side</div>
+            <select id="playerSide" class="select-input">
+              <option value="white" selected>Play as White</option>
+              <option value="black">Play as Black</option>
+            </select>
           </div>
         </div>
 
-        <div class="captured-tray">
-          <div id="capturedWhite" class="captured-row"></div>
-          <div id="capturedBlack" class="captured-row"></div>
+        <div class="controls-group">
+          <div class="status-box">
+            <div class="turn-indicator">
+              <div id="turnBadge" class="turn-badge"></div>
+              <span id="turnText">White's Turn</span>
+            </div>
+            <div id="checkBadge" class="check-badge">CHECK!</div>
+            <div id="aiThinking" class="ai-thinking">⚙️ Thinking...</div>
+          </div>
+
+          <div class="captured-tray">
+            <div id="capturedWhite" class="captured-row"></div>
+            <div id="capturedBlack" class="captured-row"></div>
+          </div>
+
+          <div class="control-label">Move Log</div>
+          <div id="moveLog" class="move-log"></div>
         </div>
-
-        <div class="history-title">Move Log</div>
-        <div id="moveLog" class="move-log"></div>
       </div>
 
-      <div class="camera-tools">
-        <button id="btnCamPerspective" class="btn" title="3D Perspective">📷 3D View</button>
-        <button id="btnCamTop" class="btn" title="Top View">⬇️ Top View</button>
-        <button id="btnCamFlip" class="btn" title="Rotate Board">🔄 Flip</button>
+      <div class="controls-group">
+        <div class="btn-row">
+          <button id="btnUndo" class="btn">↩ Undo</button>
+          <button id="btnFlip" class="btn">🔄 Flip</button>
+        </div>
+        <button id="btnNewGame" class="btn btn-primary">↻ New Game</button>
       </div>
     </div>
-  </div>
 
-  <!-- Admin Customizer Modal Overlay -->
-  <div id="adminModal" class="modal-overlay">
-    <div class="modal-card" style="max-width: 680px; text-align: left;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h2>⚙️ Admin Piece Customizer</h2>
-        <button id="btnCloseAdmin" class="btn">✕ Close</button>
-      </div>
-      <p style="margin-bottom: 1rem;">Upload custom JPEG/PNG images or 3D models (.gltf, .glb, .obj) for any piece type:</p>
-      
-      <div id="adminGrid" class="admin-grid">
-        <!-- Rendered dynamically by JS -->
-      </div>
-
-      <div style="display:flex; justify-content:space-between; margin-top:1.25rem; border-top:1px solid var(--hud-border); padding-top:1rem;">
-        <button id="btnResetAllCustom" class="btn btn-danger">🔥 Hard Reset (Remove All Uploads)</button>
-        <button id="btnSaveAdmin" class="btn btn-primary">Done</button>
-      </div>
-    </div>
   </div>
 
   <!-- Pawn Promotion Modal -->
   <div id="promotionModal" class="modal-overlay">
     <div class="modal-card">
       <h2>Pawn Promotion</h2>
-      <p>Select piece to replace promoted pawn:</p>
+      <p style="color:#bababa; font-size:0.9rem;">Choose piece for promotion:</p>
       <div class="promo-options">
         <button class="promo-btn" data-choice="Q">
-          <img id="promoImgQ" src="https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg" alt="Queen">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg" alt="Queen">
           <span>Queen</span>
         </button>
         <button class="promo-btn" data-choice="R">
-          <img id="promoImgR" src="https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg" alt="Rook">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg" alt="Rook">
           <span>Rook</span>
         </button>
         <button class="promo-btn" data-choice="B">
-          <img id="promoImgB" src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg" alt="Bishop">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg" alt="Bishop">
           <span>Bishop</span>
         </button>
         <button class="promo-btn" data-choice="N">
-          <img id="promoImgN" src="assets/donkey_knight.png" alt="Donkey Knight">
-          <span>Donkey (Knight)</span>
+          <img src="assets/donkey_knight.png" alt="Donkey Knight">
+          <span>Knight</span>
         </button>
       </div>
     </div>
@@ -622,287 +463,16 @@
   <!-- Game Over Modal -->
   <div id="gameOverModal" class="modal-overlay">
     <div class="modal-card">
-      <div id="gameOverTitle" class="game-over-banner">Checkmate!</div>
-      <p id="gameOverMsg">White Wins!</p>
-      <button id="btnPlayAgain" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem; margin-top: 1rem;">Play Again</button>
+      <h2 id="gameOverTitle">Checkmate!</h2>
+      <p id="gameOverMsg" style="color:#bababa; margin-bottom:1.5rem;">White Wins!</p>
+      <button id="btnPlayAgain" class="btn btn-primary">Play Again</button>
     </div>
   </div>
 
-  <!-- CLEAN MODULE IMPORTS -->
+  <!-- MODULE ENTRYPOINT -->
   <script type="module">
-    import { ChessLogic } from './js/chessLogic.js';
-    import { Scene } from './js/scene.js';
-    import { AdminPortal } from './js/adminPortal.js';
-    import { clearAllCustomizations } from './js/pieces3d.js';
-
-    const PIECES_SVG = {
-      'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
-      'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
-      'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
-      'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-      'N': 'assets/donkey_knight.png',
-      'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
-      'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
-      'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
-      'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
-      'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-      'n': 'assets/donkey_knight.png',
-      'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
-    };
-
-    let engine = new ChessLogic();
-    let scene = null;
-    let adminPortal = null;
-    let selectedSquare = null;
-    let validMoves = [];
-    let pendingPromotion = null;
-    let userSide = 'white';
-    let gameMode = 'ai-medium';
-
-    function initApp() {
-      scene = new Scene('canvas-container', handleSquareClicked);
-      adminPortal = new AdminPortal(scene, () => updateHUD());
-      setupEventListeners();
-      startNewGame();
-    }
-
-    function setupEventListeners() {
-      document.getElementById('boardTheme').addEventListener('change', (e) => {
-        document.body.setAttribute('data-theme', e.target.value);
-        scene.applyThemeMaterials(e.target.value);
-        scene.buildBoard3D();
-        scene.updatePieces(engine.board);
-        scene.renderValidMoveMarkers(validMoves, engine.board);
-      });
-
-      document.getElementById('gameMode').addEventListener('change', (e) => {
-        gameMode = e.target.value;
-        startNewGame();
-      });
-
-      document.getElementById('playerSide').addEventListener('change', (e) => {
-        userSide = e.target.value;
-        if (userSide === 'black') scene.setCameraView('flip');
-        else scene.setCameraView('perspective');
-        startNewGame();
-      });
-
-      document.getElementById('btnNewGame').addEventListener('click', () => startNewGame());
-      document.getElementById('btnPlayAgain').addEventListener('click', () => {
-        document.getElementById('gameOverModal').style.display = 'none';
-        startNewGame();
-      });
-
-      // Hard Reset Button Event
-      document.getElementById('btnHardReset').addEventListener('click', () => {
-        if (confirm("Are you sure you want to perform a Hard Reset? This will remove all custom uploaded images, 3D models, and customizations.")) {
-          clearAllCustomizations();
-          scene.updatePieces(engine.board);
-          adminPortal.buildGrid();
-          updateHUD();
-        }
-      });
-
-      document.getElementById('btnCamPerspective').addEventListener('click', () => scene.setCameraView('perspective'));
-      document.getElementById('btnCamTop').addEventListener('click', () => scene.setCameraView('top'));
-      document.getElementById('btnCamFlip').addEventListener('click', () => scene.setCameraView('flip'));
-
-      document.querySelectorAll('.promo-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const choice = btn.getAttribute('data-choice');
-          document.getElementById('promotionModal').style.display = 'none';
-          if (pendingPromotion) {
-            const { fromR, fromC, toR, toC } = pendingPromotion;
-            pendingPromotion = null;
-            executeMove(fromR, fromC, toR, toC, choice);
-          }
-        });
-      });
-    }
-
-    function startNewGame() {
-      engine.reset();
-      selectedSquare = null;
-      validMoves = [];
-      pendingPromotion = null;
-
-      document.getElementById('checkBadge').style.display = 'none';
-      document.getElementById('promotionModal').style.display = 'none';
-      document.getElementById('gameOverModal').style.display = 'none';
-
-      scene.updatePieces(engine.board);
-      scene.setHighlight(null, null);
-      scene.setCheckHighlight(null, null);
-      scene.renderValidMoveMarkers([], engine.board);
-
-      updateHUD();
-
-      if (gameMode !== 'pvp' && userSide === 'black') {
-        setTimeout(triggerAIMove, 600);
-      }
-    }
-
-    function handleSquareClicked(r, c) {
-      if (engine.isGameOver || (gameMode !== 'pvp' && engine.turn !== userSide)) return;
-
-      const clickedPiece = engine.board[r][c];
-      const clickedColor = engine.getPieceColor(clickedPiece);
-
-      if (clickedColor === engine.turn) {
-        selectedSquare = { r, c };
-        validMoves = engine.getLegalMoves(r, c);
-        scene.setHighlight(r, c);
-        scene.renderValidMoveMarkers(validMoves, engine.board);
-        return;
-      }
-
-      if (selectedSquare) {
-        const isLegal = validMoves.some(m => m.r === r && m.c === c);
-        if (isLegal) {
-          executeMove(selectedSquare.r, selectedSquare.c, r, c);
-        } else {
-          selectedSquare = null;
-          validMoves = [];
-          scene.setHighlight(null, null);
-          scene.renderValidMoveMarkers([], engine.board);
-        }
-      }
-    }
-
-    function executeMove(fromR, fromC, toR, toC, promoChoice = null) {
-      scene.animatePieceMove(fromR, fromC, toR, toC, () => {
-        finishMoveExecution(fromR, fromC, toR, toC, promoChoice);
-      });
-    }
-
-    function finishMoveExecution(fromR, fromC, toR, toC, promoChoice) {
-      const res = engine.executeMove(fromR, fromC, toR, toC, promoChoice);
-
-      if (res && res.needsPromotion) {
-        if (engine.turn === userSide || gameMode === 'pvp') {
-          pendingPromotion = { fromR, fromC, toR, toC };
-          const isWhite = res.isWhite;
-          document.getElementById('promoImgQ').src = localStorage.getItem('custom_piece_img_' + (isWhite?'Q':'q')) || PIECES_SVG[isWhite ? 'Q' : 'q'];
-          document.getElementById('promoImgR').src = localStorage.getItem('custom_piece_img_' + (isWhite?'R':'r')) || PIECES_SVG[isWhite ? 'R' : 'r'];
-          document.getElementById('promoImgB').src = localStorage.getItem('custom_piece_img_' + (isWhite?'B':'b')) || PIECES_SVG[isWhite ? 'B' : 'b'];
-          document.getElementById('promoImgN').src = localStorage.getItem('custom_piece_img_' + (isWhite?'N':'n')) || PIECES_SVG[isWhite ? 'N' : 'n'];
-          document.getElementById('promotionModal').style.display = 'flex';
-          return;
-        } else {
-          promoChoice = res.isWhite ? 'Q' : 'q';
-          engine.executeMove(fromR, fromC, toR, toC, promoChoice);
-        }
-      }
-
-      selectedSquare = null;
-      validMoves = [];
-      scene.setHighlight(null, null);
-      scene.updatePieces(engine.board);
-      scene.renderValidMoveMarkers([], engine.board);
-
-      updateHUD();
-      checkGameState();
-
-      if (!engine.isGameOver && gameMode !== 'pvp' && engine.turn !== userSide) {
-        setTimeout(triggerAIMove, 500);
-      }
-    }
-
-    function checkGameState() {
-      const legalMoves = engine.getAllLegalMovesForColor(engine.turn);
-      const checkBadge = document.getElementById('checkBadge');
-      const inCheck = engine.isInCheck(engine.turn);
-
-      if (inCheck) {
-        checkBadge.style.display = 'inline-block';
-        const kingPos = engine.findKing(engine.turn);
-        if (kingPos) scene.setCheckHighlight(kingPos.r, kingPos.c);
-      } else {
-        checkBadge.style.display = 'none';
-        scene.setCheckHighlight(null, null);
-      }
-
-      if (legalMoves.length === 0) {
-        engine.isGameOver = true;
-        const gameOverModal = document.getElementById('gameOverModal');
-        const titleEl = document.getElementById('gameOverTitle');
-        const msgEl = document.getElementById('gameOverMsg');
-
-        if (inCheck) {
-          const winner = engine.turn === 'white' ? 'Black' : 'White';
-          titleEl.textContent = 'Checkmate!';
-          msgEl.textContent = `${winner} Wins!`;
-        } else {
-          titleEl.textContent = 'Draw by Stalemate!';
-          msgEl.textContent = 'No legal moves remaining.';
-        }
-
-        gameOverModal.style.display = 'flex';
-      } else if (engine.hasInsufficientMaterial()) {
-        engine.isGameOver = true;
-        const gameOverModal = document.getElementById('gameOverModal');
-        const titleEl = document.getElementById('gameOverTitle');
-        const msgEl = document.getElementById('gameOverMsg');
-
-        titleEl.textContent = 'Draw!';
-        msgEl.textContent = 'Draw by Insufficient Material.';
-        gameOverModal.style.display = 'flex';
-      }
-    }
-
-    function triggerAIMove() {
-      if (engine.isGameOver) return;
-      const aiColor = userSide === 'white' ? 'black' : 'white';
-      const bestMove = engine.getBestAIMove(aiColor, gameMode);
-      if (!bestMove) return;
-
-      document.getElementById('aiThinking').style.display = 'flex';
-
-      setTimeout(() => {
-        document.getElementById('aiThinking').style.display = 'none';
-        executeMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC);
-      }, 250);
-    }
-
-    function updateHUD() {
-      const turnText = document.getElementById('turnText');
-      const badge = document.getElementById('turnBadge');
-
-      turnText.textContent = `${engine.turn.charAt(0).toUpperCase() + engine.turn.slice(1)}'s Turn`;
-      badge.className = `turn-badge ${engine.turn}`;
-
-      document.getElementById('capturedWhite').innerHTML = engine.capturedWhite.map(p => {
-        const src = localStorage.getItem(`custom_piece_img_${p}`) || PIECES_SVG[p];
-        return `<img src="${src}" alt="${p}">`;
-      }).join('');
-
-      document.getElementById('capturedBlack').innerHTML = engine.capturedBlack.map(p => {
-        const src = localStorage.getItem(`custom_piece_img_${p}`) || PIECES_SVG[p];
-        return `<img src="${src}" alt="${p}">`;
-      }).join('');
-
-      const moveLogEl = document.getElementById('moveLog');
-      moveLogEl.innerHTML = '';
-      for (let i = 0; i < engine.moveHistory.length; i += 2) {
-        const moveNum = Math.floor(i / 2) + 1;
-        const wMove = engine.moveHistory[i];
-        const bMove = engine.moveHistory[i + 1];
-
-        const wSrc = wMove ? (localStorage.getItem(`custom_piece_img_${wMove.piece}`) || PIECES_SVG[wMove.piece]) : '';
-        const bSrc = bMove ? (localStorage.getItem(`custom_piece_img_${bMove.piece}`) || PIECES_SVG[bMove.piece]) : '';
-
-        const wIcon = wMove ? `<img src="${wSrc}" width="16" height="16" style="vertical-align:middle;">` : '';
-        const bIcon = bMove ? `<img src="${bSrc}" width="16" height="16" style="vertical-align:middle;">` : '';
-        
-        const div = document.createElement('div');
-        div.className = 'move-item';
-        div.innerHTML = `${moveNum}. ${wIcon} ${wMove ? wMove.notation : ''} ${bIcon} ${bMove ? bMove.notation : ''}`;
-        moveLogEl.appendChild(div);
-      }
-      moveLogEl.scrollTop = moveLogEl.scrollHeight;
-    }
-
-    initApp();
+    import { ChessApp } from './js/app.js';
+    window.app = new ChessApp();
   </script>
 </body>
 </html>

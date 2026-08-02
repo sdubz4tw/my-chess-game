@@ -1,0 +1,346 @@
+/**
+ * 2D Chess.com Main Web Application Controller & Renderer
+ */
+
+import { getBestMove } from './ai.js';
+
+const PIECES_SVG = {
+  'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+  'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+  'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+  'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+  'N': 'assets/donkey_knight.png',
+  'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
+  'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
+  'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+  'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+  'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+  'n': 'assets/donkey_knight.png',
+  'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
+};
+
+export class ChessApp {
+  constructor() {
+    this.game = new Chess();
+    this.boardEl = document.getElementById('chessboard');
+    this.selectedSq = null;
+    this.legalMoves = [];
+    this.isFlipped = false;
+    this.gameMode = 'ai-medium';
+    this.userSide = 'w';
+    this.pendingPromotion = null;
+
+    this.capturedWhite = [];
+    this.capturedBlack = [];
+
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.renderBoard();
+    this.updateHUD();
+  }
+
+  setupEventListeners() {
+    document.getElementById('gameMode').addEventListener('change', (e) => {
+      this.gameMode = e.target.value;
+      this.startNewGame();
+    });
+
+    document.getElementById('playerSide').addEventListener('change', (e) => {
+      this.userSide = e.target.value === 'white' ? 'w' : 'b';
+      this.isFlipped = (this.userSide === 'b');
+      this.startNewGame();
+    });
+
+    document.getElementById('btnNewGame').addEventListener('click', () => this.startNewGame());
+    document.getElementById('btnUndo').addEventListener('click', () => this.undoMove());
+    document.getElementById('btnFlip').addEventListener('click', () => {
+      this.isFlipped = !this.isFlipped;
+      this.renderBoard();
+    });
+
+    document.getElementById('btnPlayAgain').addEventListener('click', () => {
+      document.getElementById('gameOverModal').style.display = 'none';
+      this.startNewGame();
+    });
+
+    document.querySelectorAll('.promo-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const choice = btn.getAttribute('data-choice').toLowerCase();
+        document.getElementById('promotionModal').style.display = 'none';
+        if (this.pendingPromotion) {
+          const { from, to } = this.pendingPromotion;
+          this.pendingPromotion = null;
+          this.makeMove(from, to, choice);
+        }
+      });
+    });
+  }
+
+  startNewGame() {
+    this.game.reset();
+    this.selectedSq = null;
+    this.legalMoves = [];
+    this.pendingPromotion = null;
+    this.capturedWhite = [];
+    this.capturedBlack = [];
+
+    document.getElementById('checkBadge').style.display = 'none';
+    document.getElementById('promotionModal').style.display = 'none';
+    document.getElementById('gameOverModal').style.display = 'none';
+
+    this.renderBoard();
+    this.updateHUD();
+
+    if (this.gameMode !== 'pvp' && this.game.turn() !== this.userSide) {
+      setTimeout(() => this.triggerAIMove(), 500);
+    }
+  }
+
+  renderBoard() {
+    this.boardEl.innerHTML = '';
+    const boardState = this.game.board();
+
+    const ranks = this.isFlipped ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1, 0];
+    const files = this.isFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
+
+    ranks.forEach(r => {
+      files.forEach(c => {
+        const sqName = String.fromCharCode(97 + c) + (r + 1);
+        const isLight = (r + c) % 2 !== 0;
+
+        const sqDiv = document.createElement('div');
+        sqDiv.className = `sq ${isLight ? 'light' : 'dark'}`;
+        sqDiv.dataset.sq = sqName;
+
+        // Square Highlight
+        if (this.selectedSq === sqName) {
+          sqDiv.classList.add('selected');
+        }
+
+        // Legal Move Dot / Ring
+        const legalMove = this.legalMoves.find(m => m.to === sqName);
+        if (legalMove) {
+          const dot = document.createElement('div');
+          dot.className = legalMove.captured ? 'legal-ring' : 'legal-dot';
+          sqDiv.appendChild(dot);
+        }
+
+        // Check Highlight
+        if (this.game.in_check()) {
+          const kingPiece = this.game.turn() === 'w' ? 'K' : 'k';
+          const pieceOnSq = boardState[7 - r][c];
+          if (pieceOnSq && pieceOnSq.type.toUpperCase() === 'K' && pieceOnSq.color === this.game.turn()) {
+            sqDiv.classList.add('in-check');
+          }
+        }
+
+        // Render Piece Image
+        const piece = boardState[7 - r][c];
+        if (piece) {
+          const pieceSymbol = piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase();
+          const img = document.createElement('img');
+          img.src = PIECES_SVG[pieceSymbol] || '';
+          img.alt = pieceSymbol;
+          img.className = 'piece-img';
+          img.draggable = true;
+
+          // Drag Events
+          img.addEventListener('dragstart', (e) => this.handleDragStart(e, sqName));
+          sqDiv.appendChild(img);
+        }
+
+        // Drop & Click Events
+        sqDiv.addEventListener('click', () => this.handleSquareClick(sqName));
+        sqDiv.addEventListener('dragover', (e) => e.preventDefault());
+        sqDiv.addEventListener('drop', (e) => this.handleDrop(e, sqName));
+
+        this.boardEl.appendChild(sqDiv);
+      });
+    });
+  }
+
+  handleSquareClick(sqName) {
+    if (this.game.game_over() || (this.gameMode !== 'pvp' && this.game.turn() !== this.userSide)) return;
+
+    const piece = this.game.get(sqName);
+
+    if (piece && piece.color === this.game.turn()) {
+      this.selectedSq = sqName;
+      this.legalMoves = this.game.moves({ square: sqName, verbose: true });
+      this.renderBoard();
+      return;
+    }
+
+    if (this.selectedSq) {
+      const move = this.legalMoves.find(m => m.to === sqName);
+      if (move) {
+        if (move.flags.includes('p')) {
+          this.pendingPromotion = { from: this.selectedSq, to: sqName };
+          document.getElementById('promotionModal').style.display = 'flex';
+          return;
+        }
+        this.makeMove(this.selectedSq, sqName);
+      } else {
+        this.selectedSq = null;
+        this.legalMoves = [];
+        this.renderBoard();
+      }
+    }
+  }
+
+  handleDragStart(e, sqName) {
+    if (this.game.game_over() || (this.gameMode !== 'pvp' && this.game.turn() !== this.userSide)) {
+      e.preventDefault();
+      return;
+    }
+    const piece = this.game.get(sqName);
+    if (piece && piece.color === this.game.turn()) {
+      this.selectedSq = sqName;
+      this.legalMoves = this.game.moves({ square: sqName, verbose: true });
+      e.dataTransfer.setData('text/plain', sqName);
+      this.renderBoard();
+    } else {
+      e.preventDefault();
+    }
+  }
+
+  handleDrop(e, targetSq) {
+    e.preventDefault();
+    const fromSq = e.dataTransfer.getData('text/plain');
+    if (fromSq && fromSq !== targetSq) {
+      const move = this.legalMoves.find(m => m.to === targetSq);
+      if (move) {
+        if (move.flags.includes('p')) {
+          this.pendingPromotion = { from: fromSq, to: targetSq };
+          document.getElementById('promotionModal').style.display = 'flex';
+          return;
+        }
+        this.makeMove(fromSq, targetSq);
+      }
+    }
+  }
+
+  makeMove(from, to, promotion = 'q') {
+    const move = this.game.move({ from, to, promotion });
+    if (move) {
+      if (move.captured) {
+        const capSymbol = move.color === 'w' ? move.captured.toLowerCase() : move.captured.toUpperCase();
+        if (move.color === 'w') this.capturedBlack.push(capSymbol);
+        else this.capturedWhite.push(capSymbol);
+      }
+
+      this.selectedSq = null;
+      this.legalMoves = [];
+      this.renderBoard();
+      this.updateHUD();
+      this.checkGameState();
+
+      if (!this.game.game_over() && this.gameMode !== 'pvp' && this.game.turn() !== this.userSide) {
+        setTimeout(() => this.triggerAIMove(), 450);
+      }
+    }
+  }
+
+  undoMove() {
+    if (this.game.history().length === 0) return;
+    this.game.undo();
+    if (this.gameMode !== 'pvp' && this.game.history().length > 0) {
+      this.game.undo(); // Undo AI move as well
+    }
+    this.selectedSq = null;
+    this.legalMoves = [];
+    this.renderBoard();
+    this.updateHUD();
+  }
+
+  triggerAIMove() {
+    if (this.game.game_over()) return;
+    document.getElementById('aiThinking').style.display = 'flex';
+
+    setTimeout(() => {
+      document.getElementById('aiThinking').style.display = 'none';
+      const aiColor = this.userSide === 'w' ? 'ai-medium' : 'ai-medium';
+      const bestMove = getBestMove(this.game, this.gameMode);
+      if (bestMove) {
+        this.makeMove(bestMove.from, bestMove.to, bestMove.promotion || 'q');
+      }
+    }, 250);
+  }
+
+  checkGameState() {
+    const checkBadge = document.getElementById('checkBadge');
+    if (this.game.in_check()) {
+      checkBadge.style.display = 'inline-block';
+    } else {
+      checkBadge.style.display = 'none';
+    }
+
+    if (this.game.game_over()) {
+      const gameOverModal = document.getElementById('gameOverModal');
+      const titleEl = document.getElementById('gameOverTitle');
+      const msgEl = document.getElementById('gameOverMsg');
+
+      if (this.game.in_checkmate()) {
+        const winner = this.game.turn() === 'w' ? 'Black' : 'White';
+        titleEl.textContent = 'Checkmate!';
+        msgEl.textContent = `${winner} Wins!`;
+      } else if (this.game.in_stalemate()) {
+        titleEl.textContent = 'Draw!';
+        msgEl.textContent = 'Draw by Stalemate.';
+      } else if (this.game.in_threefold_repetition()) {
+        titleEl.textContent = 'Draw!';
+        msgEl.textContent = 'Draw by 3-Fold Repetition.';
+      } else if (this.game.insufficient_material()) {
+        titleEl.textContent = 'Draw!';
+        msgEl.textContent = 'Draw by Insufficient Material.';
+      } else {
+        titleEl.textContent = 'Game Over!';
+        msgEl.textContent = 'The game has ended.';
+      }
+
+      gameOverModal.style.display = 'flex';
+    }
+  }
+
+  updateHUD() {
+    const turnText = document.getElementById('turnText');
+    const badge = document.getElementById('turnBadge');
+
+    const isWhite = this.game.turn() === 'w';
+    turnText.textContent = `${isWhite ? 'White' : 'Black'}'s Turn`;
+    badge.className = `turn-badge ${isWhite ? 'white' : 'black'}`;
+
+    document.getElementById('capturedWhite').innerHTML = this.capturedWhite.map(p => 
+      `<img src="${PIECES_SVG[p]}" alt="${p}">`
+    ).join('');
+
+    document.getElementById('capturedBlack').innerHTML = engine.capturedBlack ? engine.capturedBlack.map(p => 
+      `<img src="${PIECES_SVG[p]}" alt="${p}">`
+    ).join('') : this.capturedBlack.map(p => `<img src="${PIECES_SVG[p]}" alt="${p}">`).join('');
+
+    const moveLogEl = document.getElementById('moveLog');
+    moveLogEl.innerHTML = '';
+    const history = this.game.history({ verbose: true });
+
+    for (let i = 0; i < history.length; i += 2) {
+      const moveNum = Math.floor(i / 2) + 1;
+      const wMove = history[i];
+      const bMove = history[i + 1];
+
+      const wSymbol = wMove ? (wMove.color === 'w' ? wMove.piece.toUpperCase() : wMove.piece.toLowerCase()) : '';
+      const bSymbol = bMove ? (bMove.color === 'w' ? bMove.piece.toUpperCase() : bMove.piece.toLowerCase()) : '';
+
+      const wIcon = wMove ? `<img src="${PIECES_SVG[wSymbol]}" width="16" height="16" style="vertical-align:middle;">` : '';
+      const bIcon = bMove ? `<img src="${PIECES_SVG[bSymbol]}" width="16" height="16" style="vertical-align:middle;">` : '';
+
+      const div = document.createElement('div');
+      div.className = 'move-item';
+      div.innerHTML = `${moveNum}. ${wIcon} ${wMove ? wMove.san : ''} ${bIcon} ${bMove ? bMove.san : ''}`;
+      moveLogEl.appendChild(div);
+    }
+    moveLogEl.scrollTop = moveLogEl.scrollHeight;
+  }
+}
