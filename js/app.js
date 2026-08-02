@@ -1,26 +1,30 @@
 /**
- * 2D Chess.com Main Web Application Controller & Renderer
+ * 2D Chess.com Main Web Application Controller & Renderer (Standard Vector Assets & Fail-Safe AI)
  */
 
 import { getBestMove } from './ai.js';
 
+// Standard 100% Uniform 2D Vector SVG Chess Pieces (Wikimedia Standard)
 const PIECES_SVG = {
   'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
   'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
   'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
   'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-  'N': 'assets/donkey_knight.png',
+  'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
   'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
   'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
   'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
   'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
   'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-  'n': 'assets/donkey_knight.png',
+  'n': 'https://upload.wikimedia.org/wikipedia/commons/ef/ef2/Chess_ndt45.svg',
   'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
 };
 
 export class ChessApp {
   constructor() {
+    // Clear any previous custom piece overrides or localStorage settings on load
+    localStorage.clear();
+
     this.game = new Chess();
     this.boardEl = document.getElementById('chessboard');
     this.selectedSq = null;
@@ -95,7 +99,7 @@ export class ChessApp {
     this.updateHUD();
 
     if (this.gameMode !== 'pvp' && this.game.turn() !== this.userSide) {
-      setTimeout(() => this.triggerAIMove(), 500);
+      setTimeout(() => this.triggerAIMove(), 300);
     }
   }
 
@@ -115,12 +119,10 @@ export class ChessApp {
         sqDiv.className = `sq ${isLight ? 'light' : 'dark'}`;
         sqDiv.dataset.sq = sqName;
 
-        // Square Highlight
         if (this.selectedSq === sqName) {
           sqDiv.classList.add('selected');
         }
 
-        // Legal Move Dot / Ring
         const legalMove = this.legalMoves.find(m => m.to === sqName);
         if (legalMove) {
           const dot = document.createElement('div');
@@ -128,16 +130,13 @@ export class ChessApp {
           sqDiv.appendChild(dot);
         }
 
-        // Check Highlight
         if (this.game.in_check()) {
-          const kingPiece = this.game.turn() === 'w' ? 'K' : 'k';
           const pieceOnSq = boardState[7 - r][c];
           if (pieceOnSq && pieceOnSq.type.toUpperCase() === 'K' && pieceOnSq.color === this.game.turn()) {
             sqDiv.classList.add('in-check');
           }
         }
 
-        // Render Piece Image
         const piece = boardState[7 - r][c];
         if (piece) {
           const pieceSymbol = piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase();
@@ -147,12 +146,10 @@ export class ChessApp {
           img.className = 'piece-img';
           img.draggable = true;
 
-          // Drag Events
           img.addEventListener('dragstart', (e) => this.handleDragStart(e, sqName));
           sqDiv.appendChild(img);
         }
 
-        // Drop & Click Events
         sqDiv.addEventListener('click', () => this.handleSquareClick(sqName));
         sqDiv.addEventListener('dragover', (e) => e.preventDefault());
         sqDiv.addEventListener('drop', (e) => this.handleDrop(e, sqName));
@@ -238,8 +235,9 @@ export class ChessApp {
       this.updateHUD();
       this.checkGameState();
 
+      // Trigger AI Move asynchronously after 250ms render delay
       if (!this.game.game_over() && this.gameMode !== 'pvp' && this.game.turn() !== this.userSide) {
-        setTimeout(() => this.triggerAIMove(), 450);
+        setTimeout(() => this.triggerAIMove(), 250);
       }
     }
   }
@@ -248,7 +246,7 @@ export class ChessApp {
     if (this.game.history().length === 0) return;
     this.game.undo();
     if (this.gameMode !== 'pvp' && this.game.history().length > 0) {
-      this.game.undo(); // Undo AI move as well
+      this.game.undo();
     }
     this.selectedSq = null;
     this.legalMoves = [];
@@ -256,17 +254,45 @@ export class ChessApp {
     this.updateHUD();
   }
 
+  /**
+   * DIRECT ASYNCHRONOUS AI MOVE TRIGGER WITH FAIL-SAFE FALLBACK
+   */
   triggerAIMove() {
     if (this.game.game_over()) return;
-    document.getElementById('aiThinking').style.display = 'flex';
+    const aiThinking = document.getElementById('aiThinking');
+    if (aiThinking) aiThinking.style.display = 'flex';
 
     setTimeout(() => {
-      document.getElementById('aiThinking').style.display = 'none';
-      const aiColor = this.userSide === 'w' ? 'ai-medium' : 'ai-medium';
-      const bestMove = getBestMove(this.game, this.gameMode);
-      if (bestMove) {
-        this.makeMove(bestMove.from, bestMove.to, bestMove.promotion || 'q');
+      try {
+        const bestMove = getBestMove(this.game, this.gameMode);
+        if (bestMove) {
+          const moveRes = this.game.move(bestMove);
+          if (moveRes && moveRes.captured) {
+            const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
+            if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
+            else this.capturedWhite.push(capSymbol);
+          }
+        }
+      } catch (err) {
+        console.error("AI execution error, executing fallback random move:", err);
+        const moves = this.game.moves({ verbose: true });
+        if (moves.length > 0) {
+          const randMove = moves[Math.floor(Math.random() * moves.length)];
+          const moveRes = this.game.move(randMove);
+          if (moveRes && moveRes.captured) {
+            const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
+            if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
+            else this.capturedWhite.push(capSymbol);
+          }
+        }
       }
+
+      if (aiThinking) aiThinking.style.display = 'none';
+      this.selectedSq = null;
+      this.legalMoves = [];
+      this.renderBoard();
+      this.updateHUD();
+      this.checkGameState();
     }, 250);
   }
 
@@ -317,9 +343,9 @@ export class ChessApp {
       `<img src="${PIECES_SVG[p]}" alt="${p}">`
     ).join('');
 
-    document.getElementById('capturedBlack').innerHTML = engine.capturedBlack ? engine.capturedBlack.map(p => 
+    document.getElementById('capturedBlack').innerHTML = this.capturedBlack.map(p => 
       `<img src="${PIECES_SVG[p]}" alt="${p}">`
-    ).join('') : this.capturedBlack.map(p => `<img src="${PIECES_SVG[p]}" alt="${p}">`).join('');
+    ).join('');
 
     const moveLogEl = document.getElementById('moveLog');
     moveLogEl.innerHTML = '';
