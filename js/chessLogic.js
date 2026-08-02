@@ -1,6 +1,72 @@
 /**
- * Strict FIDE Chess Engine & Minimax Computer AI
+ * Strict FIDE Chess Engine & Minimax Alpha-Beta AI with Positional PST Tables
  */
+
+// Positional Piece-Square Evaluation Tables (PST)
+const PST = {
+  p: [
+    [0,  0,  0,  0,  0,  0,  0,  0],
+    [50, 50, 50, 50, 50, 50, 50, 50],
+    [10, 10, 20, 30, 30, 20, 10, 10],
+    [ 5,  5, 10, 25, 25, 10,  5,  5],
+    [ 0,  0,  0, 20, 20,  0,  0,  0],
+    [ 5, -5,-10,  0,  0,-10, -5,  5],
+    [ 5, 10, 10,-20,-20, 10, 10,  5],
+    [ 0,  0,  0,  0,  0,  0,  0,  0]
+  ],
+  n: [
+    [-50,-40,-30,-30,-30,-30,-40,-50],
+    [-40,-20,  0,  0,  0,  0,-20,-40],
+    [-30,  0, 10, 15, 15, 10,  0,-30],
+    [-30,  5, 15, 20, 20, 15,  5,-30],
+    [-30,  0, 15, 20, 20, 15,  0,-30],
+    [-30,  5, 10, 15, 15, 10,  5,-30],
+    [-40,-20,  0,  5,  5,  0,-20,-40],
+    [-50,-40,-30,-30,-30,-30,-40,-50]
+  ],
+  b: [
+    [-20,-10,-10,-10,-10,-10,-10,-20],
+    [-10,  0,  0,  0,  0,  0,  0,-10],
+    [-10,  0,  5, 10, 10,  5,  0,-10],
+    [-10,  5,  5, 10, 10,  5,  5,-10],
+    [-10,  0, 10, 10, 10, 10,  0,-10],
+    [-10, 10, 10, 10, 10, 10, 10,-10],
+    [-10,  5,  0,  0,  0,  0,  5,-10],
+    [-20,-10,-10,-10,-10,-10,-10,-20]
+  ],
+  r: [
+    [ 0,  0,  0,  0,  0,  0,  0,  0],
+    [ 5, 10, 10, 10, 10, 10, 10,  5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [ 0,  0,  0,  5,  5,  0,  0,  0]
+  ],
+  q: [
+    [-20,-10,-10, -5, -5,-10,-10,-20],
+    [-10,  0,  0,  0,  0,  0,  0,-10],
+    [-10,  0,  5,  5,  5,  5,  0,-10],
+    [ -5,  0,  5,  5,  5,  5,  0, -5],
+    [  0,  0,  5,  5,  5,  5,  0, -5],
+    [-10,  5,  5,  5,  5,  5,  0,-10],
+    [-10,  0,  5,  0,  0,  0,  0,-10],
+    [-20,-10,-10, -5, -5,-10,-10,-20]
+  ],
+  k: [
+    [-30,-40,-40,-50,-50,-40,-40,-30],
+    [-30,-40,-40,-50,-50,-40,-40,-30],
+    [-30,-40,-40,-50,-50,-40,-40,-30],
+    [-30,-40,-40,-50,-50,-40,-40,-30],
+    [-20,-30,-30,-40,-40,-30,-30,-20],
+    [-10,-20,-20,-20,-20,-20,-20,-10],
+    [ 20, 20,  0,  0,  0,  0, 20, 20],
+    [ 20, 30, 10,  0,  0, 10, 30, 20]
+  ]
+};
+
+const PIECE_VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
 export class ChessLogic {
   constructor() {
@@ -120,7 +186,7 @@ export class ChessLogic {
       const dirs = [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]];
       dirs.forEach(([dr, dc]) => addMove(r + dr, c + dc));
 
-      // FIDE Castling Rules Validation
+      // Castling Validation
       if (color === 'white' && r === 7 && c === 4 && !this.castlingRights.whiteKingMoved) {
         if (!this.castlingRights.whiteRookKMoved && board[7][5] === '' && board[7][6] === '' && board[7][7] === 'R') {
           if (!this.isSquareAttacked(7, 4, 'black') && !this.isSquareAttacked(7, 5, 'black') && !this.isSquareAttacked(7, 6, 'black')) {
@@ -196,12 +262,21 @@ export class ChessLogic {
     });
   }
 
-  getAllLegalMovesForColor(color) {
+  getAllLegalMovesForColor(color, board = this.board) {
     let moves = [];
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
-        if (this.getPieceColor(this.board[r][c]) === color) {
-          const pieceMoves = this.getLegalMoves(r, c);
+        if (this.getPieceColor(board[r][c]) === color) {
+          const pieceMoves = this.getRawMoves(r, c, board).filter(m => {
+            const tempBoard = board.map(row => [...row]);
+            tempBoard[m.r][m.c] = tempBoard[r][c];
+            tempBoard[r][c] = '';
+            if (m.isEnPassant) {
+              const epRow = color === 'white' ? m.r + 1 : m.r - 1;
+              tempBoard[epRow][m.c] = '';
+            }
+            return !this.isInCheck(color, tempBoard);
+          });
           pieceMoves.forEach(m => moves.push({ fromR: r, fromC: c, toR: m.r, toC: m.c, move: m }));
         }
       }
@@ -218,12 +293,12 @@ export class ChessLogic {
       }
     }
 
-    if (pieces.length === 2) return true; // King vs King
+    if (pieces.length === 2) return true; // K vs K
 
     if (pieces.length === 3) {
       const nonKings = pieces.filter(p => p.type !== 'k');
       if (nonKings.length === 1 && (nonKings[0].type === 'b' || nonKings[0].type === 'n')) {
-        return true; // King + Bishop/Knight vs King
+        return true; // K+B or K+N vs K
       }
     }
 
@@ -231,7 +306,7 @@ export class ChessLogic {
       const bishops = pieces.filter(p => p.type === 'b');
       if (bishops.length === 2 && bishops[0].color !== bishops[1].color) {
         if (bishops[0].squareColor === bishops[1].squareColor) {
-          return true; // King + Bishop vs King + Bishop (Same Square Color)
+          return true; // K+B vs K+B (Same Square Color)
         }
       }
     }
@@ -269,7 +344,7 @@ export class ChessLogic {
     this.board[toR][toC] = (promotionChoice) ? promotionChoice : piece;
     this.board[fromR][fromC] = '';
 
-    // En Passant Target Setting (only valid for 1 turn right after 2-square pawn jump)
+    // En Passant Target Setting
     if (piece.toLowerCase() === 'p' && Math.abs(toR - fromR) === 2) {
       this.enPassantTarget = { r: (fromR + toR) / 2, c: fromC };
     } else {
@@ -278,10 +353,10 @@ export class ChessLogic {
 
     // Castling Rook Movement
     if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
-      if (toC === 6) { // Kingside O-O
+      if (toC === 6) { // Kingside
         this.board[toR][5] = this.board[toR][7];
         this.board[toR][7] = '';
-      } else if (toC === 2) { // Queenside O-O-O
+      } else if (toC === 2) { // Queenside
         this.board[toR][3] = this.board[toR][0];
         this.board[toR][0] = '';
       }
@@ -305,27 +380,102 @@ export class ChessLogic {
     return { success: true, captured };
   }
 
+  // --- MINIMAX AI WITH POSITIONAL PST & ALPHA-BETA PRUNING ---
+  evaluateBoard(board = this.board) {
+    let totalScore = 0;
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const piece = board[r][c];
+        if (piece) {
+          const color = this.getPieceColor(piece);
+          const type = piece.toLowerCase();
+          const val = PIECE_VALUES[type] || 0;
+          const pstTable = PST[type] || [];
+          const pstScore = pstTable[color === 'white' ? r : 7 - r] ? pstTable[color === 'white' ? r : 7 - r][c] : 0;
+          const totalVal = val + pstScore;
+
+          if (color === 'white') totalScore += totalVal;
+          else totalScore -= totalVal;
+        }
+      }
+    }
+    return totalScore;
+  }
+
+  minimax(board, depth, alpha, beta, isMaximizing) {
+    if (depth === 0) return this.evaluateBoard(board);
+
+    const color = isMaximizing ? 'white' : 'black';
+    const moves = this.getAllLegalMovesForColor(color, board);
+
+    if (moves.length === 0) {
+      if (this.isInCheck(color, board)) return isMaximizing ? -100000 : 100000;
+      return 0; // Stalemate
+    }
+
+    if (isMaximizing) {
+      let maxEval = -Infinity;
+      for (let m of moves) {
+        const tempBoard = board.map(row => [...row]);
+        tempBoard[m.toR][m.toC] = tempBoard[m.fromR][m.fromC];
+        tempBoard[m.fromR][m.fromC] = '';
+        const ev = this.minimax(tempBoard, depth - 1, alpha, beta, false);
+        maxEval = Math.max(maxEval, ev);
+        alpha = Math.max(alpha, ev);
+        if (beta <= alpha) break;
+      }
+      return maxEval;
+    } else {
+      let minEval = Infinity;
+      for (let m of moves) {
+        const tempBoard = board.map(row => [...row]);
+        tempBoard[m.toR][m.toC] = tempBoard[m.fromR][m.fromC];
+        tempBoard[m.fromR][m.fromC] = '';
+        const ev = this.minimax(tempBoard, depth - 1, alpha, beta, true);
+        minEval = Math.min(minEval, ev);
+        beta = Math.min(beta, ev);
+        if (beta <= alpha) break;
+      }
+      return minEval;
+    }
+  }
+
   getBestAIMove(aiColor, difficulty = 'ai-medium') {
     const moves = this.getAllLegalMovesForColor(aiColor);
     if (moves.length === 0) return null;
 
     if (difficulty === 'ai-easy') {
-      return moves[Math.floor(Math.random() * moves.length)];
+      // 30% chance random move, 70% depth 1 evaluation
+      if (Math.random() < 0.3) {
+        return moves[Math.floor(Math.random() * moves.length)];
+      }
     }
 
+    const searchDepth = (difficulty === 'ai-hard') ? 3 : (difficulty === 'ai-medium' ? 2 : 1);
+    const isMaximizing = aiColor === 'white';
     let bestMove = null;
-    let bestScore = -Infinity;
+    let bestEval = isMaximizing ? -Infinity : Infinity;
+
+    // Shuffle moves for natural play style
+    moves.sort(() => Math.random() - 0.5);
 
     for (let m of moves) {
-      const target = this.board[m.toR][m.toC];
-      let score = 0;
-      const values = { p: 1, n: 3, b: 3.2, r: 5, q: 9, k: 100 };
-      if (target) score += (values[target.toLowerCase()] || 1) * 10;
-      if (m.toR >= 3 && m.toR <= 4 && m.toC >= 3 && m.toC <= 4) score += 2;
+      const tempBoard = this.board.map(row => [...row]);
+      tempBoard[m.toR][m.toC] = tempBoard[m.fromR][m.fromC];
+      tempBoard[m.fromR][m.fromC] = '';
 
-      if (score > bestScore) {
-        bestScore = score;
-        bestMove = m;
+      const ev = this.minimax(tempBoard, searchDepth - 1, -Infinity, Infinity, !isMaximizing);
+
+      if (isMaximizing) {
+        if (ev > bestEval) {
+          bestEval = ev;
+          bestMove = m;
+        }
+      } else {
+        if (ev < bestEval) {
+          bestEval = ev;
+          bestMove = m;
+        }
       }
     }
 
