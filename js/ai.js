@@ -1,8 +1,7 @@
 /**
- * 2D Chess.com AI Engine - Minimax Alpha-Beta with Positional Piece-Square Tables (PST)
+ * 2D Chess.com AI Engine & Live Move Evaluation Classification
  */
 
-// Positional Piece-Square Tables for chess.js Evaluation
 const PST = {
   p: [
     [0,  0,  0,  0,  0,  0,  0,  0],
@@ -89,6 +88,47 @@ export function evaluateBoard(game) {
   return totalScore;
 }
 
+/**
+ * STREET FIGHTER MOVE CLASSIFIER & COMMENTARY GENERATOR
+ */
+export function classifyMove(move, evalBefore, evalAfter, turn) {
+  const delta = (turn === 'w') ? (evalAfter - evalBefore) : (evalBefore - evalAfter);
+
+  if (move.captured && delta >= 120) {
+    return {
+      type: 'brilliant',
+      bannerText: '✨ BRILLIANT!!',
+      commentary: `${turn === 'w' ? 'White' : 'Black'} unleashes an incredible tactical sacrifice strike!`
+    };
+  }
+  if (delta >= 40) {
+    return {
+      type: 'great',
+      bannerText: '⚡ GREAT MOVE!',
+      commentary: `${turn === 'w' ? 'White' : 'Black'} seizes absolute control of the board!`
+    };
+  }
+  if (delta >= -40) {
+    return {
+      type: 'good',
+      bannerText: null, // No banner for standard moves
+      commentary: `Solid position development by ${turn === 'w' ? 'White' : 'Black'}.`
+    };
+  }
+  if (delta >= -180) {
+    return {
+      type: 'mistake',
+      bannerText: '⚠️ MISTAKE!',
+      commentary: `Slight misstep! ${turn === 'w' ? 'White' : 'Black'} opens up defensive gaps.`
+    };
+  }
+  return {
+    type: 'blunder',
+    bannerText: '💥 CRITICAL BLUNDER!',
+    commentary: `Ouch! ${turn === 'w' ? 'White' : 'Black'} leaves a major piece exposed!`
+  };
+}
+
 function minimax(game, depth, alpha, beta, isMaximizing) {
   if (depth === 0 || game.game_over()) return evaluateBoard(game);
 
@@ -134,7 +174,6 @@ export function getBestMove(game, difficulty = 'ai-medium') {
   let bestMove = null;
   let bestEval = isMaximizing ? -Infinity : Infinity;
 
-  // Shuffle moves for natural play style
   moves.sort(() => Math.random() - 0.5);
 
   for (let m of moves) {
