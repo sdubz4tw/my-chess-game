@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess.com 2D - Isolated Canvas VFX Edition</title>
+  <title>Chess.com 2D - Hole.io Black Hole Swallowing Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -113,11 +113,10 @@
       overflow: hidden;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
       border: 4px solid #262421;
-      transition: transform 0.05s ease;
       position: relative;
     }
 
-    /* Isolated HTML5 2D Canvas VFX Overlay (Guaranteed top z-index rendering) */
+    /* Isolated 2D Canvas VFX Overlay for Hole.io Black Hole Animation */
     #vfx-overlay {
       position: absolute;
       top: 0;
@@ -126,19 +125,6 @@
       height: 100%;
       pointer-events: none;
       z-index: 9999;
-    }
-
-    /* Board Screen Shake FX */
-    .board-shake {
-      animation: shakeBoard 0.22s ease-in-out;
-    }
-
-    @keyframes shakeBoard {
-      0%, 100% { transform: translate(0, 0); }
-      20% { transform: translate(-5px, 4px); }
-      40% { transform: translate(5px, -4px); }
-      60% { transform: translate(-4px, -2px); }
-      80% { transform: translate(4px, 2px); }
     }
 
     .sq {
@@ -188,7 +174,7 @@
       pointer-events: auto;
       cursor: grab;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-      transition: transform 0.15s ease;
+      transition: transform 0.22s ease-in-out, opacity 0.22s ease-in-out;
       z-index: 10;
     }
 

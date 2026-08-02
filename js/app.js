@@ -1,5 +1,5 @@
 /**
- * 2D Chess.com Main Web Application Controller & Renderer (High-Impact 2D Canvas Particle Engine)
+ * 2D Chess.com Main Web Application Controller & Renderer (Hole.io Void Swallowing Capture Animation)
  */
 
 import { getBestMove, evaluateBoard, classifyMove } from './ai.js';
@@ -17,15 +17,6 @@ const PIECES_SVG = {
   'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
   'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
   'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg'
-};
-
-const PIECE_CAPTURE_TEXT = {
-  'p': 'STAB!',
-  'n': 'TRAMPLE!',
-  'b': 'SMITE!',
-  'r': 'CRUSH!',
-  'q': 'OBLITERATED!',
-  'k': 'ROYAL DOMINANCE!'
 };
 
 export class ChessApp {
@@ -48,10 +39,10 @@ export class ChessApp {
     this.userSide = 'w';
     this.pendingPromotion = null;
     this.lastMove = null;
+    this.isAnimating = false;
 
     this.capturedWhite = [];
     this.capturedBlack = [];
-    this.activeVFX = [];
 
     this.init();
   }
@@ -64,7 +55,6 @@ export class ChessApp {
     this.updateEvalGauge();
 
     window.addEventListener('resize', () => this.resizeCanvas());
-    requestAnimationFrame((t) => this.loopVFX(t));
   }
 
   resizeCanvas() {
@@ -117,9 +107,9 @@ export class ChessApp {
     this.legalMoves = [];
     this.pendingPromotion = null;
     this.lastMove = null;
+    this.isAnimating = false;
     this.capturedWhite = [];
     this.capturedBlack = [];
-    this.activeVFX = [];
 
     document.getElementById('checkBadge').style.display = 'none';
     document.getElementById('promotionModal').style.display = 'none';
@@ -196,7 +186,7 @@ export class ChessApp {
   }
 
   handleSquareClick(sqName) {
-    if (this.game.game_over() || (this.gameMode !== 'pvp' && this.game.turn() !== this.userSide)) return;
+    if (this.isAnimating || this.game.game_over() || (this.gameMode !== 'pvp' && this.game.turn() !== this.userSide)) return;
 
     const piece = this.game.get(sqName);
 
@@ -225,7 +215,7 @@ export class ChessApp {
   }
 
   handleDragStart(e, sqName) {
-    if (this.game.game_over() || (this.gameMode !== 'pvp' && this.game.turn() !== this.userSide)) {
+    if (this.isAnimating || this.game.game_over() || (this.gameMode !== 'pvp' && this.game.turn() !== this.userSide)) {
       e.preventDefault();
       return;
     }
@@ -242,6 +232,7 @@ export class ChessApp {
 
   handleDrop(e, targetSq) {
     e.preventDefault();
+    if (this.isAnimating) return;
     const fromSq = e.dataTransfer.getData('text/plain');
     if (fromSq && fromSq !== targetSq) {
       const move = this.legalMoves.find(m => m.to === targetSq);
@@ -257,7 +248,20 @@ export class ChessApp {
   }
 
   makeMove(from, to, promotion = 'q') {
-    const attackingPiece = this.game.get(from);
+    const targetPieceBefore = this.game.get(to);
+
+    if (targetPieceBefore) { // Is a Capture Move! Trigger Hole.io Swallowing Sequence
+      this.isAnimating = true;
+      this.animateHoleIoSwallow(to, () => {
+        this.isAnimating = false;
+        this.finishMove(from, to, promotion);
+      });
+    } else {
+      this.finishMove(from, to, promotion);
+    }
+  }
+
+  finishMove(from, to, promotion) {
     const evalBefore = evaluateBoard(this.game);
     const turnMoving = this.game.turn();
     const move = this.game.move({ from, to, promotion });
@@ -269,10 +273,6 @@ export class ChessApp {
         const capSymbol = move.color === 'w' ? move.captured.toLowerCase() : move.captured.toUpperCase();
         if (move.color === 'w') this.capturedBlack.push(capSymbol);
         else this.capturedWhite.push(capSymbol);
-
-        // Immediate Screen Shake & High-Impact Particle Engine Trigger
-        this.triggerBoardShake();
-        this.triggerCanvasVFX(attackingPiece ? attackingPiece.type.toLowerCase() : 'p', to);
       }
 
       const evalAfter = evaluateBoard(this.game);
@@ -293,10 +293,10 @@ export class ChessApp {
   }
 
   /**
-   * HIGH-IMPACT 30-50 PARTICLE ENGINE WITH PHYSICS & SLASH ARCS
+   * HOLE.IO BLACK HOLE SWALLOWING CANVAS ANIMATION (3-Step Sequence)
    */
   getSquareCenterCoords(targetSq) {
-    if (!this.canvas) return { x: 0, y: 0 };
+    if (!this.canvas) return { x: 0, y: 0, sqW: 75 };
     const fileCol = targetSq.charCodeAt(0) - 97;
     const rankRow = parseInt(targetSq.charAt(1), 10) - 1;
 
@@ -313,285 +313,71 @@ export class ChessApp {
     };
   }
 
-  triggerCanvasVFX(attackingPiece, targetSq) {
+  animateHoleIoSwallow(targetSq, onComplete) {
     const coords = this.getSquareCenterCoords(targetSq);
-    console.log("VFX Triggered for:", attackingPiece, "at coords:", coords);
+    const targetSqEl = document.querySelector(`.sq[data-sq="${targetSq}"]`);
+    const pieceImg = targetSqEl ? targetSqEl.querySelector('.piece-img') : null;
 
-    const textStr = PIECE_CAPTURE_TEXT[attackingPiece] || 'CRUSH!';
-    const now = performance.now();
+    const maxRadius = coords.sqW * 0.52;
+    const startTime = performance.now();
+    const duration = 520; // 150ms expand + 220ms swallow + 150ms collapse
 
-    // 1. Floating Combat Text
-    this.activeVFX.push({
-      type: 'text',
-      text: textStr,
-      x: coords.x,
-      y: coords.y,
-      startY: coords.y,
-      startTime: now,
-      duration: 550
-    });
+    const renderFrame = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1.0);
 
-    // 2. High-Velocity Particle Bursts (30-50 Particles per Capture)
-    if (attackingPiece === 'p') { // PAWN: 35 Yellow Sparks + Clashing Metal Slash Lines
-      for (let i = 0; i < 35; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 3 + Math.random() * 5;
-        this.activeVFX.push({
-          type: 'spark',
-          x: coords.x, y: coords.y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          gravity: 0.08,
-          size: 2.5 + Math.random() * 3,
-          color: i % 2 === 0 ? '#fef08a' : '#f59e0b',
-          startTime: now,
-          duration: 400
-        });
-      }
-      this.activeVFX.push({ type: 'slash', x: coords.x, y: coords.y, angle: -Math.PI / 4, length: coords.sqW * 0.9, startTime: now, duration: 250 });
-      this.activeVFX.push({ type: 'slash', x: coords.x, y: coords.y, angle: Math.PI / 4, length: coords.sqW * 0.9, startTime: now, duration: 250 });
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    } else if (attackingPiece === 'n') { // KNIGHT: Expanding Green/Cyan Shockwave + Debris Burst
-      this.activeVFX.push({
-        type: 'shockwave',
-        x: coords.x, y: coords.y,
-        maxRadius: coords.sqW * 1.1,
-        color: '#34d399',
-        startTime: now,
-        duration: 450
-      });
-      for (let i = 0; i < 40; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 5;
-        this.activeVFX.push({
-          type: 'spark',
-          x: coords.x, y: coords.y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          gravity: 0.12,
-          size: 3 + Math.random() * 4,
-          color: i % 2 === 0 ? '#38bdf8' : '#34d399',
-          startTime: now,
-          duration: 450
-        });
+      let radius = 0;
+
+      if (elapsed <= 140) { // Step 1: Expand Hole (0 - 140ms)
+        const p1 = elapsed / 140;
+        radius = p1 * maxRadius;
+      } else if (elapsed <= 370) { // Step 2: Swallow Piece (140 - 370ms)
+        radius = maxRadius;
+        const p2 = (elapsed - 140) / 230;
+
+        if (pieceImg) {
+          pieceImg.style.transform = `scale(${Math.max(0, 1 - p2)}) rotate(${p2 * 180}deg)`;
+          pieceImg.style.opacity = `${1 - p2}`;
+        }
+      } else { // Step 3: Collapse Void (370 - 520ms)
+        const p3 = (elapsed - 370) / 150;
+        radius = (1 - p3) * maxRadius;
       }
 
-    } else if (attackingPiece === 'b') { // BISHOP: Vertical Holy Beam + 40 Golden Rain Particles
-      this.activeVFX.push({
-        type: 'holy_beam',
-        x: coords.x, y: coords.y,
-        width: coords.sqW * 0.7,
-        height: this.canvas.height,
-        startTime: now,
-        duration: 420
-      });
-      for (let i = 0; i < 40; i++) {
-        this.activeVFX.push({
-          type: 'spark',
-          x: coords.x + (Math.random() - 0.5) * coords.sqW,
-          y: coords.y - (Math.random() * coords.sqH),
-          vx: (Math.random() - 0.5) * 1.5,
-          vy: -2 - Math.random() * 3,
-          gravity: 0.2,
-          size: 2.5 + Math.random() * 3,
-          color: '#fef08a',
-          startTime: now,
-          duration: 450
-        });
-      }
-
-    } else if (attackingPiece === 'r') { // ROOK: 45 Crumbling Masonry Particles + Downward Gravity
-      for (let i = 0; i < 45; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 6;
-        this.activeVFX.push({
-          type: 'spark',
-          x: coords.x, y: coords.y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          gravity: 0.18,
-          size: 4 + Math.random() * 5,
-          color: i % 2 === 0 ? '#a8a29e' : '#78716c',
-          startTime: now,
-          duration: 500
-        });
-      }
-
-    } else if (attackingPiece === 'q') { // QUEEN: Arcane Purple Nova + Shockwave + 3 Slash Arcs
-      this.activeVFX.push({
-        type: 'queen_nova',
-        x: coords.x, y: coords.y,
-        maxRadius: coords.sqW * 1.4,
-        color: '#c084fc',
-        startTime: now,
-        duration: 500
-      });
-      for (let i = 0; i < 3; i++) {
-        this.activeVFX.push({
-          type: 'slash',
-          x: coords.x, y: coords.y,
-          angle: (i * Math.PI) / 3 - Math.PI / 6,
-          length: coords.sqW * 1.2,
-          startTime: now,
-          duration: 300
-        });
-      }
-      for (let i = 0; i < 45; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 3 + Math.random() * 6;
-        this.activeVFX.push({
-          type: 'spark',
-          x: coords.x, y: coords.y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          gravity: 0.05,
-          size: 3 + Math.random() * 4,
-          color: '#e879f9',
-          startTime: now,
-          duration: 500
-        });
-      }
-
-    } else if (attackingPiece === 'k') { // KING: Golden Starburst Flash + Crown Aura Pulse
-      this.activeVFX.push({
-        type: 'royal_starburst',
-        x: coords.x, y: coords.y,
-        maxRadius: coords.sqW * 1.25,
-        color: '#f59e0b',
-        startTime: now,
-        duration: 550
-      });
-      for (let i = 0; i < 35; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 4.5;
-        this.activeVFX.push({
-          type: 'spark',
-          x: coords.x, y: coords.y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          gravity: 0.06,
-          size: 3.5 + Math.random() * 3.5,
-          color: '#fbbf24',
-          startTime: now,
-          duration: 500
-        });
-      }
-    }
-  }
-
-  loopVFX(timestamp) {
-    requestAnimationFrame((t) => this.loopVFX(t));
-
-    if (!this.ctx || !this.canvas) return;
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    if (this.activeVFX.length === 0) return;
-
-    this.activeVFX = this.activeVFX.filter(vfx => {
-      const elapsed = timestamp - vfx.startTime;
-      const progress = Math.min(elapsed / vfx.duration, 1.0);
-      if (progress >= 1.0) return false;
-
-      const alpha = 1.0 - progress;
-      this.ctx.save();
-
-      if (vfx.type === 'text') {
-        const currY = vfx.startY - (progress * 42);
-        const scale = progress < 0.2 ? (progress / 0.2) * 1.3 : (1.3 - (progress - 0.2) * 0.375);
-        this.ctx.globalAlpha = alpha;
-        this.ctx.font = `900 ${Math.round(20 * scale)}px Outfit, sans-serif`;
-        this.ctx.textAlign = 'center';
-        this.ctx.fillStyle = '#fde047';
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-        this.ctx.shadowBlur = 10;
-        this.ctx.fillText(vfx.text, vfx.x, currY);
-
-      } else if (vfx.type === 'spark') {
-        vfx.x += vfx.vx;
-        vfx.y += vfx.vy;
-        if (vfx.gravity) vfx.vy += vfx.gravity;
-        this.ctx.globalAlpha = alpha;
-        this.ctx.fillStyle = vfx.color;
+      if (radius > 0) {
+        // Outer Glowing Event Horizon Ring
+        this.ctx.save();
         this.ctx.beginPath();
-        this.ctx.arc(vfx.x, vfx.y, Math.max(0.5, vfx.size * (1 - progress * 0.6)), 0, Math.PI * 2);
+        this.ctx.arc(coords.x, coords.y, radius + 3, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(168, 85, 247, 0.4)';
+        this.ctx.shadowColor = '#a855f7';
+        this.ctx.shadowBlur = 20;
         this.ctx.fill();
 
-      } else if (vfx.type === 'slash') {
-        this.ctx.globalAlpha = alpha;
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 4 * (1 - progress);
-        this.ctx.shadowColor = '#fde047';
-        this.ctx.shadowBlur = 12;
+        // Inner Cosmic Void
         this.ctx.beginPath();
-        const halfL = (vfx.length / 2) * Math.sin(progress * Math.PI);
-        this.ctx.moveTo(vfx.x - Math.cos(vfx.angle) * halfL, vfx.y - Math.sin(vfx.angle) * halfL);
-        this.ctx.lineTo(vfx.x + Math.cos(vfx.angle) * halfL, vfx.y + Math.sin(vfx.angle) * halfL);
-        this.ctx.stroke();
-
-      } else if (vfx.type === 'shockwave') {
-        const radius = progress * vfx.maxRadius;
-        this.ctx.globalAlpha = alpha;
-        this.ctx.strokeStyle = vfx.color;
-        this.ctx.lineWidth = 5 * (1 - progress);
-        this.ctx.shadowColor = '#0284c7';
-        this.ctx.shadowBlur = 18;
-        this.ctx.beginPath();
-        this.ctx.arc(vfx.x, vfx.y, radius, 0, Math.PI * 2);
-        this.ctx.stroke();
-
-      } else if (vfx.type === 'holy_beam') {
-        this.ctx.globalAlpha = Math.sin(progress * Math.PI) * 0.9;
-        const grad = this.ctx.createLinearGradient(vfx.x, 0, vfx.x, vfx.height);
-        grad.addColorStop(0, 'rgba(255,255,255,0)');
-        grad.addColorStop(0.5, '#fef08a');
-        grad.addColorStop(1, 'rgba(255,255,255,0)');
-        this.ctx.fillStyle = grad;
-        this.ctx.shadowColor = '#eab308';
-        this.ctx.shadowBlur = 24;
-        this.ctx.fillRect(vfx.x - (vfx.width / 2), 0, vfx.width * (1 + progress * 0.3), vfx.height);
-
-      } else if (vfx.type === 'queen_nova') {
-        const radius = progress * vfx.maxRadius;
-        this.ctx.globalAlpha = alpha;
-        this.ctx.strokeStyle = vfx.color;
-        this.ctx.lineWidth = 6 * (1 - progress);
-        this.ctx.shadowColor = '#a855f7';
-        this.ctx.shadowBlur = 28;
-        this.ctx.beginPath();
-        this.ctx.arc(vfx.x, vfx.y, radius, 0, Math.PI * 2);
-        this.ctx.stroke();
-
-      } else if (vfx.type === 'royal_starburst') {
-        const radius = progress * vfx.maxRadius;
-        this.ctx.globalAlpha = alpha;
-        this.ctx.strokeStyle = vfx.color;
-        this.ctx.lineWidth = 5 * (1 - progress);
-        this.ctx.shadowColor = '#eab308';
-        this.ctx.shadowBlur = 28;
-        this.ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
-          const angle = (i * Math.PI) / 4;
-          const sx = vfx.x + Math.cos(angle) * (radius * 0.25);
-          const sy = vfx.y + Math.sin(angle) * (radius * 0.25);
-          const ex = vfx.x + Math.cos(angle) * radius;
-          const ey = vfx.y + Math.sin(angle) * radius;
-          this.ctx.moveTo(sx, sy);
-          this.ctx.lineTo(ex, ey);
-        }
-        this.ctx.stroke();
+        this.ctx.arc(coords.x, coords.y, Math.max(0, radius), 0, Math.PI * 2);
+        this.ctx.fillStyle = '#111116';
+        this.ctx.fill();
+        this.ctx.restore();
       }
 
-      this.ctx.restore();
-      return true;
-    });
+      if (progress < 1.0) {
+        requestAnimationFrame(renderFrame);
+      } else {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        if (onComplete) onComplete();
+      }
+    };
+
+    requestAnimationFrame(renderFrame);
   }
 
   updateSidebarCommentary(rating) {
     if (this.commentaryBoxEl) {
       this.commentaryBoxEl.innerHTML = `${rating.badgeHTML} <span>${rating.commentary}</span>`;
-      if (rating.type === 'blunder') {
-        this.triggerBoardShake();
-      }
     }
   }
 
@@ -618,15 +404,8 @@ export class ChessApp {
     }
   }
 
-  triggerBoardShake() {
-    this.boardEl.classList.remove('board-shake');
-    void this.boardEl.offsetWidth;
-    this.boardEl.classList.add('board-shake');
-    setTimeout(() => this.boardEl.classList.remove('board-shake'), 250);
-  }
-
   undoMove() {
-    if (this.game.history().length === 0) return;
+    if (this.isAnimating || this.game.history().length === 0) return;
     this.game.undo();
     if (this.gameMode !== 'pvp' && this.game.history().length > 0) {
       this.game.undo();
@@ -640,61 +419,40 @@ export class ChessApp {
   }
 
   triggerAIMove() {
-    if (this.game.game_over()) return;
+    if (this.isAnimating || this.game.game_over()) return;
     const aiThinking = document.getElementById('aiThinking');
     if (aiThinking) aiThinking.style.display = 'flex';
 
     setTimeout(() => {
       try {
-        const evalBefore = evaluateBoard(this.game);
-        const turnMoving = this.game.turn();
         const bestMove = getBestMove(this.game, this.gameMode);
 
         if (bestMove) {
-          const attackingPiece = this.game.get(bestMove.from);
-          const moveRes = this.game.move(bestMove);
+          const targetPieceBefore = this.game.get(bestMove.to);
 
-          if (moveRes) {
-            this.lastMove = { from: moveRes.from, to: moveRes.to };
-            if (moveRes.captured) {
-              const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
-              if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
-              else this.capturedWhite.push(capSymbol);
-
-              this.triggerBoardShake();
-              this.triggerCanvasVFX(attackingPiece ? attackingPiece.type.toLowerCase() : 'p', moveRes.to);
-            }
-
-            const evalAfter = evaluateBoard(this.game);
-            const rating = classifyMove(moveRes, evalBefore, evalAfter, turnMoving);
-            this.updateSidebarCommentary(rating);
-            this.updateEvalGauge();
+          if (targetPieceBefore) { // AI Capture Move! Trigger Hole.io Swallowing Sequence
+            this.isAnimating = true;
+            this.animateHoleIoSwallow(bestMove.to, () => {
+              this.isAnimating = false;
+              if (aiThinking) aiThinking.style.display = 'none';
+              this.finishMove(bestMove.from, bestMove.to, bestMove.promotion || 'q');
+            });
+          } else {
+            if (aiThinking) aiThinking.style.display = 'none';
+            this.finishMove(bestMove.from, bestMove.to, bestMove.promotion || 'q');
           }
+        } else {
+          if (aiThinking) aiThinking.style.display = 'none';
         }
       } catch (err) {
         console.error("AI execution error, executing fallback random move:", err);
         const moves = this.game.moves({ verbose: true });
         if (moves.length > 0) {
           const randMove = moves[Math.floor(Math.random() * moves.length)];
-          const moveRes = this.game.move(randMove);
-          if (moveRes) {
-            this.lastMove = { from: moveRes.from, to: moveRes.to };
-            if (moveRes.captured) {
-              const capSymbol = moveRes.color === 'w' ? moveRes.captured.toLowerCase() : moveRes.captured.toUpperCase();
-              if (moveRes.color === 'w') this.capturedBlack.push(capSymbol);
-              else this.capturedWhite.push(capSymbol);
-            }
-            this.updateEvalGauge();
-          }
+          this.finishMove(randMove.from, randMove.to, randMove.promotion || 'q');
         }
+        if (aiThinking) aiThinking.style.display = 'none';
       }
-
-      if (aiThinking) aiThinking.style.display = 'none';
-      this.selectedSq = null;
-      this.legalMoves = [];
-      this.renderBoard();
-      this.updateHUD();
-      this.checkGameState();
     }, 250);
   }
 
