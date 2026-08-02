@@ -1,5 +1,5 @@
 /**
- * 2D Chess.com Main Web Application Controller & Renderer (Arcade Banners & Commentary Engine)
+ * 2D Chess.com Main Web Application Controller & Renderer (Vertical Eval Bar & Arcade Commentary)
  */
 
 import { getBestMove, evaluateBoard, classifyMove } from './ai.js';
@@ -28,6 +28,8 @@ export class ChessApp {
     this.arcadeBannerEl = document.getElementById('arcadeBanner');
     this.arcadeTextEl = document.getElementById('arcadeText');
     this.commentaryBoxEl = document.getElementById('commentaryBox');
+    this.evalFillEl = document.getElementById('evalBarWhite');
+    this.evalScoreTextEl = document.getElementById('evalScoreText');
 
     this.selectedSq = null;
     this.legalMoves = [];
@@ -47,6 +49,7 @@ export class ChessApp {
     this.setupEventListeners();
     this.renderBoard();
     this.updateHUD();
+    this.updateEvalGauge();
   }
 
   setupEventListeners() {
@@ -102,6 +105,7 @@ export class ChessApp {
 
     this.renderBoard();
     this.updateHUD();
+    this.updateEvalGauge();
 
     if (this.gameMode !== 'pvp' && this.game.turn() !== this.userSide) {
       setTimeout(() => this.triggerAIMove(), 300);
@@ -244,10 +248,10 @@ export class ChessApp {
         this.triggerBoardShake();
       }
 
-      // Street Fighter Live Evaluation & Arcade Banner
       const evalAfter = evaluateBoard(this.game);
       const rating = classifyMove(move, evalBefore, evalAfter, turnMoving);
       this.showArcadeRating(rating);
+      this.updateEvalGauge();
 
       this.selectedSq = null;
       this.legalMoves = [];
@@ -257,6 +261,30 @@ export class ChessApp {
 
       if (!this.game.game_over() && this.gameMode !== 'pvp' && this.game.turn() !== this.userSide) {
         setTimeout(() => this.triggerAIMove(), 250);
+      }
+    }
+  }
+
+  updateEvalGauge() {
+    const scoreInPawns = evaluateBoard(this.game) / 100.0;
+    // Map score (-10.0 to +10.0) to height percentage (5% to 95%)
+    const fillPercent = Math.min(Math.max(50 + (scoreInPawns * 4.5), 5), 95);
+
+    if (this.evalFillEl) {
+      this.evalFillEl.style.height = `${fillPercent}%`;
+    }
+
+    if (this.evalScoreTextEl) {
+      if (this.game.in_checkmate()) {
+        this.evalScoreTextEl.textContent = this.game.turn() === 'w' ? '-M' : '+M';
+      } else {
+        const scoreStr = scoreInPawns > 0 ? `+${scoreInPawns.toFixed(1)}` : scoreInPawns.toFixed(1);
+        this.evalScoreTextEl.textContent = scoreStr;
+        if (scoreInPawns < 0) {
+          this.evalScoreTextEl.classList.add('black-lead');
+        } else {
+          this.evalScoreTextEl.classList.remove('black-lead');
+        }
       }
     }
   }
@@ -299,6 +327,7 @@ export class ChessApp {
     this.lastMove = null;
     this.renderBoard();
     this.updateHUD();
+    this.updateEvalGauge();
   }
 
   triggerAIMove() {
@@ -326,6 +355,7 @@ export class ChessApp {
             const evalAfter = evaluateBoard(this.game);
             const rating = classifyMove(moveRes, evalBefore, evalAfter, turnMoving);
             this.showArcadeRating(rating);
+            this.updateEvalGauge();
           }
         }
       } catch (err) {
@@ -342,6 +372,7 @@ export class ChessApp {
               else this.capturedWhite.push(capSymbol);
               this.triggerBoardShake();
             }
+            this.updateEvalGauge();
           }
         }
       }
